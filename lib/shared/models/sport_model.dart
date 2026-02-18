@@ -34,6 +34,7 @@ class SportModel {
   final Map<String, dynamic> config;
   final String icon;
   final int displayOrder;
+  final bool isActive;
 
   const SportModel({
     required this.id,
@@ -42,6 +43,7 @@ class SportModel {
     this.config = const {},
     this.icon = 'sports',
     this.displayOrder = 0,
+    this.isActive = true,
   });
 
   bool get isSetsGames => scoringType == 'sets_games';
@@ -194,6 +196,7 @@ class SportModel {
       config: json['config'] as Map<String, dynamic>? ?? {},
       icon: json['icon'] as String? ?? 'sports',
       displayOrder: json['display_order'] as int? ?? 0,
+      isActive: json['is_active'] as bool? ?? true,
     );
   }
 
@@ -205,6 +208,7 @@ class SportModel {
       'config': config,
       'icon': icon,
       'display_order': displayOrder,
+      'is_active': isActive,
     };
   }
 

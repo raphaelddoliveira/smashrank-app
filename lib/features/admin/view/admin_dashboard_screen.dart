@@ -8,6 +8,8 @@ import '../../../core/constants/supabase_constants.dart';
 import '../../../services/supabase_service.dart';
 import '../../../shared/models/club_member_model.dart';
 import '../../../shared/models/enums.dart';
+import '../../../shared/models/sport_model.dart';
+import '../../clubs/data/club_repository.dart';
 import '../../clubs/viewmodel/club_providers.dart';
 
 class AdminDashboardScreen extends StatelessWidget {
@@ -39,10 +41,10 @@ class AdminDashboardScreen extends StatelessWidget {
             onTap: () {},
           ),
           _AdminCard(
-            icon: Icons.calendar_month,
-            title: 'Quadras',
-            subtitle: 'CRUD de quadras e slots',
-            onTap: () {},
+            icon: Icons.sports,
+            title: 'Esportes',
+            subtitle: 'Habilitar/desabilitar esportes',
+            onTap: () => context.push('/admin/sports'),
           ),
         ],
       ),
@@ -421,5 +423,90 @@ class _ClubMemberStatusBadge extends StatelessWidget {
         style: TextStyle(fontSize: 10, color: color, fontWeight: FontWeight.w600),
       ),
     );
+  }
+}
+
+// ─── Admin Sports Screen ───
+
+final _adminSportsProvider = FutureProvider<List<SportModel>>((ref) async {
+  final repo = ref.watch(clubRepositoryProvider);
+  return repo.getAllSportsAdmin();
+});
+
+class AdminSportsScreen extends ConsumerWidget {
+  const AdminSportsScreen({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final sportsAsync = ref.watch(_adminSportsProvider);
+
+    return Scaffold(
+      appBar: AppBar(title: const Text('Esportes')),
+      body: sportsAsync.when(
+        data: (sports) => ListView.builder(
+          padding: const EdgeInsets.all(12),
+          itemCount: sports.length,
+          itemBuilder: (context, index) {
+            final sport = sports[index];
+            return Card(
+              margin: const EdgeInsets.only(bottom: 8),
+              child: SwitchListTile(
+                secondary: CircleAvatar(
+                  backgroundColor: sport.isActive
+                      ? AppColors.primary.withAlpha(25)
+                      : AppColors.surfaceVariant,
+                  child: Icon(
+                    sport.iconData,
+                    color: sport.isActive ? AppColors.primary : AppColors.onBackgroundLight,
+                    size: 20,
+                  ),
+                ),
+                title: Text(
+                  sport.name,
+                  style: TextStyle(
+                    fontWeight: FontWeight.w600,
+                    color: sport.isActive ? null : AppColors.onBackgroundLight,
+                  ),
+                ),
+                subtitle: Text(
+                  _scoringLabel(sport.scoringType),
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: sport.isActive ? AppColors.onBackgroundMedium : AppColors.onBackgroundLight,
+                  ),
+                ),
+                value: sport.isActive,
+                onChanged: (value) async {
+                  try {
+                    await ref.read(clubRepositoryProvider).toggleSportActive(sport.id, value);
+                    ref.invalidate(_adminSportsProvider);
+                    ref.invalidate(allSportsProvider);
+                  } catch (e) {
+                    if (context.mounted) {
+                      SnackbarUtils.showError(context, 'Erro: $e');
+                    }
+                  }
+                },
+              ),
+            );
+          },
+        ),
+        loading: () => const Center(child: CircularProgressIndicator()),
+        error: (error, _) => Center(child: Text('Erro: $error')),
+      ),
+    );
+  }
+
+  String _scoringLabel(String scoringType) {
+    switch (scoringType) {
+      case 'sets_games':
+        return 'Sets e games';
+      case 'sets_points':
+        return 'Sets e pontos';
+      case 'simple_score':
+        return 'Placar simples';
+      default:
+        return scoringType;
+    }
   }
 }

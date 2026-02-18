@@ -204,6 +204,10 @@ final appRouterProvider = Provider<GoRouter>((ref) {
             path: 'ambulances',
             builder: (context, state) => const AdminAmbulanceScreen(),
           ),
+          GoRoute(
+            path: 'sports',
+            builder: (context, state) => const AdminSportsScreen(),
+          ),
         ],
       ),
     ],

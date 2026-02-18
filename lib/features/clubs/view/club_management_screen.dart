@@ -12,11 +12,11 @@ import '../../courts/viewmodel/courts_viewmodel.dart';
 import '../data/club_repository.dart';
 import '../viewmodel/club_providers.dart';
 
-/// Courts for a specific club + sport (including inactive for admin view)
-final _clubCourtsProvider = FutureProvider.family<List<CourtModel>, ({String clubId, String? sportId})>(
-  (ref, params) async {
+/// Courts for a specific club (all sports, including inactive for admin view)
+final _clubAllCourtsProvider = FutureProvider.family<List<CourtModel>, String>(
+  (ref, clubId) async {
     final repo = ref.watch(courtRepositoryProvider);
-    return repo.getAllCourts(clubId: params.clubId, sportId: params.sportId);
+    return repo.getAllCourts(clubId: clubId);
   },
 );
 
@@ -723,12 +723,8 @@ class _CourtsSection extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final sportId = ref.watch(currentSportIdProvider);
-    final currentSport = ref.watch(currentSportProvider).valueOrNull;
-    final config = currentSport?.facilityConfig;
-    final plural = config?.plural ?? 'Locais';
-    final providerKey = (clubId: clubId, sportId: sportId);
-    final courtsAsync = ref.watch(_clubCourtsProvider(providerKey));
+    final courtsAsync = ref.watch(_clubAllCourtsProvider(clubId));
+    final clubSports = ref.watch(clubSportsProvider).valueOrNull ?? [];
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -740,19 +736,19 @@ class _CourtsSection extends ConsumerWidget {
                 padding: const EdgeInsets.only(left: 4),
                 child: courtsAsync.when(
                   data: (courts) => Text(
-                    '$plural (${courts.where((c) => c.isActive).length})',
+                    'Quadras / Campos (${courts.where((c) => c.isActive).length})',
                     style: Theme.of(context).textTheme.titleMedium?.copyWith(
                       fontWeight: FontWeight.w700,
                     ),
                   ),
-                  loading: () => Text(plural),
-                  error: (_, _) => Text(plural),
+                  loading: () => const Text('Quadras / Campos'),
+                  error: (_, _) => const Text('Quadras / Campos'),
                 ),
               ),
             ),
             if (isAdmin)
               TextButton.icon(
-                onPressed: () => _showCourtDialog(context, ref),
+                onPressed: () => _showCourtDialog(context, ref, clubSports: clubSports),
                 icon: const Icon(Icons.add, size: 18),
                 label: const Text('Adicionar'),
               ),
@@ -762,30 +758,69 @@ class _CourtsSection extends ConsumerWidget {
         courtsAsync.when(
           data: (courts) {
             if (courts.isEmpty) {
-              return Card(
+              return const Card(
                 child: ListTile(
-                  leading: const Icon(Icons.sports, color: AppColors.onBackgroundLight),
-                  title: Text(config?.emptyAdmin ?? 'Nenhum local cadastrado'),
+                  leading: Icon(Icons.sports, color: AppColors.onBackgroundLight),
+                  title: Text('Nenhuma quadra/campo cadastrado'),
                   subtitle: Text('Adicione para reservas'),
                 ),
               );
             }
+
+            // Group courts by sportId
+            final grouped = <String, List<CourtModel>>{};
+            for (final c in courts) {
+              grouped.putIfAbsent(c.sportId, () => []).add(c);
+            }
+
             return Column(
-              children: courts.map((court) => _CourtTile(
-                court: court,
-                isAdmin: isAdmin,
-                onEdit: () => _showCourtDialog(context, ref, court: court),
-                onToggleActive: () async {
-                  final repo = ref.read(courtRepositoryProvider);
-                  if (court.isActive) {
-                    await repo.deactivateCourt(court.id);
-                  } else {
-                    await repo.reactivateCourt(court.id);
-                  }
-                  ref.invalidate(_clubCourtsProvider(providerKey));
-                  ref.invalidate(courtsListProvider);
-                },
-              )).toList(),
+              children: grouped.entries.map((entry) {
+                final sport = clubSports
+                    .where((cs) => cs.sportId == entry.key)
+                    .map((cs) => cs.sport)
+                    .firstOrNull;
+                final config = sport?.facilityConfig;
+                final sportLabel = config?.plural ?? sport?.name ?? 'Outro';
+
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.only(left: 4, top: 8, bottom: 4),
+                      child: Row(
+                        children: [
+                          if (sport != null) ...[
+                            Icon(sport.iconData, size: 16, color: AppColors.onBackgroundMedium),
+                            const SizedBox(width: 6),
+                          ],
+                          Text(
+                            sportLabel,
+                            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                              fontWeight: FontWeight.w600,
+                              color: AppColors.onBackgroundMedium,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    ...entry.value.map((court) => _CourtTile(
+                      court: court,
+                      isAdmin: isAdmin,
+                      onEdit: () => _showCourtDialog(context, ref, court: court, clubSports: clubSports),
+                      onToggleActive: () async {
+                        final repo = ref.read(courtRepositoryProvider);
+                        if (court.isActive) {
+                          await repo.deactivateCourt(court.id);
+                        } else {
+                          await repo.reactivateCourt(court.id);
+                        }
+                        ref.invalidate(_clubAllCourtsProvider(clubId));
+                        ref.invalidate(courtsListProvider);
+                      },
+                    )),
+                  ],
+                );
+              }).toList(),
             );
           },
           loading: () => const Center(child: CircularProgressIndicator()),
@@ -795,16 +830,31 @@ class _CourtsSection extends ConsumerWidget {
     );
   }
 
-  void _showCourtDialog(BuildContext context, WidgetRef ref, {CourtModel? court}) {
-    final sportId = ref.read(currentSportIdProvider);
-    final currentSport = ref.read(currentSportProvider).valueOrNull;
-    final config = currentSport?.facilityConfig;
-    final providerKey = (clubId: clubId, sportId: sportId);
-
-    if (sportId == null) {
-      SnackbarUtils.showInfo(context, 'Selecione um esporte primeiro');
+  void _showCourtDialog(
+    BuildContext context,
+    WidgetRef ref, {
+    CourtModel? court,
+    required List<ClubSportModel> clubSports,
+  }) {
+    if (clubSports.isEmpty) {
+      SnackbarUtils.showInfo(context, 'Adicione um esporte ao clube primeiro');
       return;
     }
+
+    // For editing, find the sport of the court; for new, default to current or first
+    final initialSportId = court?.sportId
+        ?? ref.read(currentSportIdProvider)
+        ?? clubSports.first.sportId;
+
+    SportModel? findSport(String sportId) {
+      return clubSports
+          .where((cs) => cs.sportId == sportId)
+          .map((cs) => cs.sport)
+          .firstOrNull;
+    }
+
+    String selectedSportId = initialSportId;
+    FacilityConfig? config = findSport(selectedSportId)?.facilityConfig;
 
     final nameController = TextEditingController(text: court?.name ?? '');
     final notesController = TextEditingController(text: court?.notes ?? '');
@@ -822,6 +872,35 @@ class _CourtsSection extends ConsumerWidget {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
+                // Sport selector (only for new courts)
+                if (court == null && clubSports.length > 1)
+                  DropdownButtonFormField<String>(
+                    initialValue: selectedSportId,
+                    decoration: const InputDecoration(labelText: 'Esporte'),
+                    items: clubSports
+                        .where((cs) => cs.sport != null)
+                        .map((cs) => DropdownMenuItem(
+                              value: cs.sportId,
+                              child: Row(
+                                children: [
+                                  Icon(cs.sport!.iconData, size: 18),
+                                  const SizedBox(width: 8),
+                                  Text(cs.sport!.name),
+                                ],
+                              ),
+                            ))
+                        .toList(),
+                    onChanged: (v) {
+                      if (v == null) return;
+                      setState(() {
+                        selectedSportId = v;
+                        config = findSport(v)?.facilityConfig;
+                        selectedSurface = null; // reset surface when sport changes
+                      });
+                    },
+                  ),
+                if (court == null && clubSports.length > 1)
+                  const SizedBox(height: 16),
                 TextField(
                   controller: nameController,
                   decoration: InputDecoration(
@@ -831,11 +910,12 @@ class _CourtsSection extends ConsumerWidget {
                   textCapitalization: TextCapitalization.words,
                 ),
                 const SizedBox(height: 16),
-                if (config != null && config.surfaces.isNotEmpty)
+                if (config != null && config!.surfaces.isNotEmpty)
                   DropdownButtonFormField<String>(
+                    key: ValueKey('surface_$selectedSportId'),
                     initialValue: selectedSurface,
                     decoration: const InputDecoration(labelText: 'Tipo de piso'),
-                    items: config.surfaces
+                    items: config!.surfaces
                         .map((s) => DropdownMenuItem(value: s.value, child: Text(s.label)))
                         .toList(),
                     onChanged: (v) => setState(() => selectedSurface = v),
@@ -872,7 +952,7 @@ class _CourtsSection extends ConsumerWidget {
                 if (court == null) {
                   await repo.createCourt(
                     clubId: clubId,
-                    sportId: sportId,
+                    sportId: selectedSportId,
                     name: name,
                     surfaceType: selectedSurface,
                     isCovered: isCovered,
@@ -891,7 +971,7 @@ class _CourtsSection extends ConsumerWidget {
                         : notesController.text.trim(),
                   );
                 }
-                ref.invalidate(_clubCourtsProvider(providerKey));
+                ref.invalidate(_clubAllCourtsProvider(clubId));
                 ref.invalidate(courtsListProvider);
                 if (ctx.mounted) Navigator.pop(ctx);
               },

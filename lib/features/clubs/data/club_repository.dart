@@ -214,14 +214,40 @@ class ClubRepository {
 
   // ─── Sports ───
 
-  /// Get all available sports (reference table)
+  /// Get all active sports (for normal use)
   Future<List<SportModel>> getAllSports() async {
+    try {
+      final data = await _client
+          .from('sports')
+          .select()
+          .eq('is_active', true)
+          .order('display_order', ascending: true);
+      return data.map((e) => SportModel.fromJson(e)).toList();
+    } catch (e) {
+      throw ErrorHandler.handle(e);
+    }
+  }
+
+  /// Get all sports including inactive (for admin)
+  Future<List<SportModel>> getAllSportsAdmin() async {
     try {
       final data = await _client
           .from('sports')
           .select()
           .order('display_order', ascending: true);
       return data.map((e) => SportModel.fromJson(e)).toList();
+    } catch (e) {
+      throw ErrorHandler.handle(e);
+    }
+  }
+
+  /// Toggle sport active status
+  Future<void> toggleSportActive(String sportId, bool isActive) async {
+    try {
+      await _client
+          .from('sports')
+          .update({'is_active': isActive})
+          .eq('id', sportId);
     } catch (e) {
       throw ErrorHandler.handle(e);
     }
