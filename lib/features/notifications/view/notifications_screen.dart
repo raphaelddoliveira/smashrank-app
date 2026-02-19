@@ -18,7 +18,7 @@ class NotificationsScreen extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: clubAppBarTitle('Notificacoes', context, ref),
+        title: clubAppBarTitle('Notificações', context, ref),
         centerTitle: true,
         actions: [
           IconButton(
@@ -42,7 +42,7 @@ class NotificationsScreen extends ConsumerWidget {
                   Icon(Icons.notifications_none, size: 64, color: AppColors.onBackgroundLight),
                   SizedBox(height: 16),
                   Text(
-                    'Nenhuma notificacao',
+                    'Nenhuma notificação',
                     style: TextStyle(fontSize: 16, color: AppColors.onBackgroundLight),
                   ),
                 ],

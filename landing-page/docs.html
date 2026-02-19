@@ -1,0 +1,799 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Guia de Uso - SmashRank</title>
+  <meta name="description" content="Guia passo a passo do SmashRank: como usar o ranking, criar desafios, reservar quadras e gerenciar seu clube.">
+
+  <!-- Open Graph -->
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="Guia de Uso - SmashRank">
+  <meta property="og:description" content="Aprenda a usar o SmashRank passo a passo.">
+  <meta property="og:locale" content="pt_BR">
+
+  <!-- Theme -->
+  <meta name="theme-color" content="#1B4332">
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@600;700&display=swap" rel="stylesheet">
+
+  <!-- Styles -->
+  <link rel="stylesheet" href="css/styles.css">
+  <link rel="stylesheet" href="css/animations.css">
+  <link rel="stylesheet" href="css/docs.css">
+</head>
+<body>
+  <!-- ========== NAVBAR ========== -->
+  <header id="navbar" class="navbar">
+    <nav class="navbar__inner container">
+      <a href="index.html" class="navbar__logo">
+        <svg width="32" height="32" viewBox="0 0 32 32" fill="none" aria-hidden="true">
+          <circle cx="16" cy="16" r="14" fill="#C9A84C"/>
+          <path d="M8 4C12 10 12 22 8 28" stroke="#A38A30" stroke-width="2" fill="none"/>
+          <path d="M24 4C20 10 20 22 24 28" stroke="#A38A30" stroke-width="2" fill="none"/>
+        </svg>
+        <span>SmashRank</span>
+      </a>
+
+      <ul class="navbar__links" id="navLinks">
+        <li><a href="#primeiros-passos">Primeiros Passos</a></li>
+        <li><a href="#ranking">Ranking</a></li>
+        <li><a href="#desafios">Desafios</a></li>
+        <li><a href="#quadras">Quadras</a></li>
+        <li><a href="#admin">Admin</a></li>
+        <li><a href="#faq-docs">FAQ</a></li>
+      </ul>
+
+      <a href="index.html" class="btn btn--outline navbar__cta">&larr; Voltar ao Site</a>
+
+      <button class="navbar__hamburger" id="hamburger" aria-label="Abrir menu" aria-expanded="false">
+        <span></span>
+        <span></span>
+        <span></span>
+      </button>
+    </nav>
+  </header>
+
+  <!-- Mobile Menu -->
+  <div class="navbar__mobile" id="mobileMenu">
+    <ul>
+      <li><a href="#primeiros-passos">Primeiros Passos</a></li>
+      <li><a href="#ranking">Ranking</a></li>
+      <li><a href="#desafios">Desafios</a></li>
+      <li><a href="#quadras">Quadras</a></li>
+      <li><a href="#admin">Admin</a></li>
+      <li><a href="#faq-docs">FAQ</a></li>
+      <li><a href="index.html" class="btn btn--gold">&larr; Voltar ao Site</a></li>
+    </ul>
+  </div>
+
+  <main id="main">
+
+    <!-- ========== HERO COMPACTO ========== -->
+    <section class="docs-hero">
+      <div class="container">
+        <nav class="breadcrumb reveal">
+          <a href="index.html">SmashRank</a>
+          <span>&rsaquo;</span>
+          <span>Guia de Uso</span>
+        </nav>
+        <h1 class="docs-hero__title reveal">Como usar o SmashRank</h1>
+        <p class="docs-hero__subtitle reveal">Guia passo a passo para jogadores e administradores de clube.</p>
+
+        <div class="docs-nav-cards reveal">
+          <a href="#primeiros-passos" class="docs-nav-card">
+            <div class="docs-nav-card__icon">
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+            </div>
+            <span>Primeiros Passos</span>
+          </a>
+          <a href="#desafios" class="docs-nav-card">
+            <div class="docs-nav-card__icon">
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/></svg>
+            </div>
+            <span>Desafios</span>
+          </a>
+          <a href="#quadras" class="docs-nav-card">
+            <div class="docs-nav-card__icon">
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+            </div>
+            <span>Quadras</span>
+          </a>
+          <a href="#admin" class="docs-nav-card">
+            <div class="docs-nav-card__icon">
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+            </div>
+            <span>Admin</span>
+          </a>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========== PRIMEIROS PASSOS ========== -->
+    <section id="primeiros-passos" class="section">
+      <div class="container container--narrow">
+        <div class="section__header reveal">
+          <span class="pill pill--gold">Início</span>
+          <h2 class="section__title">Primeiros Passos</h2>
+          <p class="section__subtitle">Como criar sua conta e entrar em um clube.</p>
+        </div>
+
+        <div class="docs-content reveal">
+          <h3>Criar sua conta</h3>
+          <div class="docs-flow">
+            <div class="docs-flow__step">
+              <div class="docs-flow__number">1</div>
+              <div class="docs-flow__text">
+                <strong>Abra o app SmashRank</strong>
+                <p>Na tela de login, toque em <strong>"Criar conta"</strong> na parte inferior.</p>
+              </div>
+            </div>
+            <div class="docs-flow__connector"></div>
+            <div class="docs-flow__step">
+              <div class="docs-flow__number">2</div>
+              <div class="docs-flow__text">
+                <strong>Preencha seus dados</strong>
+                <p>Informe seu nome completo, e-mail e crie uma senha. Toque em <strong>"Registrar"</strong>.</p>
+              </div>
+            </div>
+            <div class="docs-flow__connector"></div>
+            <div class="docs-flow__step">
+              <div class="docs-flow__number">3</div>
+              <div class="docs-flow__text">
+                <strong>Pronto!</strong>
+                <p>Sua conta foi criada. Agora você precisa entrar em um clube para começar a jogar.</p>
+              </div>
+            </div>
+          </div>
+
+          <h3>Entrar em um clube</h3>
+          <div class="docs-flow">
+            <div class="docs-flow__step">
+              <div class="docs-flow__number">1</div>
+              <div class="docs-flow__text">
+                <strong>Peça o código de convite</strong>
+                <p>O administrador do seu clube tem um código de 6 caracteres (ex: ABC123). Peça a ele.</p>
+              </div>
+            </div>
+            <div class="docs-flow__connector"></div>
+            <div class="docs-flow__step">
+              <div class="docs-flow__number">2</div>
+              <div class="docs-flow__text">
+                <strong>Toque em "Entrar no Clube"</strong>
+                <p>Na tela inicial (quando você ainda não tem clube), toque no botão "Entrar no Clube".</p>
+              </div>
+            </div>
+            <div class="docs-flow__connector"></div>
+            <div class="docs-flow__step">
+              <div class="docs-flow__number">3</div>
+              <div class="docs-flow__text">
+                <strong>Digite o código</strong>
+                <p>Insira o código de convite e toque em "Solicitar Entrada".</p>
+              </div>
+            </div>
+            <div class="docs-flow__connector"></div>
+            <div class="docs-flow__step">
+              <div class="docs-flow__number">4</div>
+              <div class="docs-flow__text">
+                <strong>Aguarde a aprovação</strong>
+                <p>O administrador do clube receberá uma notificação e aprovará sua solicitação. Você será notificado quando for aceito.</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="docs-tip">
+            <strong>Dica:</strong> Se você é o primeiro do grupo, pode criar seu próprio clube tocando em "Criar Clube". Você será o administrador e receberá um código de convite para compartilhar.
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========== RANKING ========== -->
+    <section id="ranking" class="section section--alt">
+      <div class="container container--narrow">
+        <div class="section__header reveal">
+          <span class="pill pill--green">Ranking</span>
+          <h2 class="section__title">Ver o Ranking</h2>
+          <p class="section__subtitle">Como consultar sua posição e o histórico de evolução.</p>
+        </div>
+
+        <div class="docs-content reveal">
+          <h3>Ver sua posição no ranking</h3>
+          <div class="docs-flow">
+            <div class="docs-flow__step">
+              <div class="docs-flow__number">1</div>
+              <div class="docs-flow__text">
+                <strong>Abra o app</strong>
+                <p>A tela inicial já mostra o Ranking do seu clube. É a primeira aba no menu inferior.</p>
+              </div>
+            </div>
+            <div class="docs-flow__connector"></div>
+            <div class="docs-flow__step">
+              <div class="docs-flow__number">2</div>
+              <div class="docs-flow__text">
+                <strong>Veja a lista</strong>
+                <p>Os jogadores aparecem ordenados por posição. Os 3 primeiros têm destaque especial (ouro, prata, bronze). Sua linha está marcada com "(Você)".</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="docs-highlight">
+            <h4>Como subir no ranking?</h4>
+            <p>A única forma de subir é vencendo desafios contra jogadores que estão acima de você. Se você ganhar, toma a posição do adversário!</p>
+          </div>
+
+          <h3>Ver o histórico de um jogador</h3>
+          <div class="docs-flow">
+            <div class="docs-flow__step">
+              <div class="docs-flow__number">1</div>
+              <div class="docs-flow__text">
+                <strong>Na tela de Ranking</strong>
+                <p>Toque no nome de qualquer jogador da lista.</p>
+              </div>
+            </div>
+            <div class="docs-flow__connector"></div>
+            <div class="docs-flow__step">
+              <div class="docs-flow__number">2</div>
+              <div class="docs-flow__text">
+                <strong>Veja o histórico</strong>
+                <p>Aparece um gráfico com a evolução da posição ao longo do tempo, e uma timeline mostrando cada mudança (subiu, desceu, manteve) com data e motivo.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========== DESAFIOS ========== -->
+    <section id="desafios" class="section">
+      <div class="container container--narrow">
+        <div class="section__header reveal">
+          <span class="pill pill--gold">Desafios</span>
+          <h2 class="section__title">Como Desafiar</h2>
+          <p class="section__subtitle">Passo a passo para criar, responder e registrar resultado de desafios.</p>
+        </div>
+
+        <div class="docs-content reveal">
+          <h3>Criar um desafio</h3>
+          <div class="docs-flow">
+            <div class="docs-flow__step">
+              <div class="docs-flow__number">1</div>
+              <div class="docs-flow__text">
+                <strong>Toque em "Desafios" no menu inferior</strong>
+                <p>A aba Desafios mostra seus desafios ativos e o histórico.</p>
+              </div>
+            </div>
+            <div class="docs-flow__connector"></div>
+            <div class="docs-flow__step">
+              <div class="docs-flow__number">2</div>
+              <div class="docs-flow__text">
+                <strong>Toque no botão "Novo Desafio"</strong>
+                <p>É o botão verde no canto inferior. Ele abre a lista de oponentes disponíveis.</p>
+              </div>
+            </div>
+            <div class="docs-flow__connector"></div>
+            <div class="docs-flow__step">
+              <div class="docs-flow__number">3</div>
+              <div class="docs-flow__text">
+                <strong>Escolha o oponente</strong>
+                <p>A lista mostra apenas jogadores que você pode desafiar (até 2 posições acima). Toque no jogador desejado.</p>
+              </div>
+            </div>
+            <div class="docs-flow__connector"></div>
+            <div class="docs-flow__step">
+              <div class="docs-flow__number">4</div>
+              <div class="docs-flow__text">
+                <strong>Confirme o desafio</strong>
+                <p>Toque em "Desafiar". O oponente receberá uma notificação e tem 48 horas para responder.</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="docs-warning">
+            <strong>Atenção:</strong> Se o oponente não responder em 48 horas, ele perde por WO automático e você toma a posição dele.
+          </div>
+
+          <h3>Responder a um desafio (se você foi desafiado)</h3>
+          <div class="docs-flow">
+            <div class="docs-flow__step">
+              <div class="docs-flow__number">1</div>
+              <div class="docs-flow__text">
+                <strong>Você receberá uma notificação</strong>
+                <p>Toque na notificação ou vá em Desafios e toque no desafio pendente.</p>
+              </div>
+            </div>
+            <div class="docs-flow__connector"></div>
+            <div class="docs-flow__step">
+              <div class="docs-flow__number">2</div>
+              <div class="docs-flow__text">
+                <strong>Toque em "Propor Datas"</strong>
+                <p>Você deve sugerir 3 datas e horários para o jogo acontecer.</p>
+              </div>
+            </div>
+            <div class="docs-flow__connector"></div>
+            <div class="docs-flow__step">
+              <div class="docs-flow__number">3</div>
+              <div class="docs-flow__text">
+                <strong>Aguarde a escolha</strong>
+                <p>O desafiante vai escolher uma das 3 datas. Você será notificado quando a data for confirmada.</p>
+              </div>
+            </div>
+          </div>
+
+          <h3>Escolher a data (se você é o desafiante)</h3>
+          <p>Quando o oponente propor as 3 datas:</p>
+          <div class="docs-flow">
+            <div class="docs-flow__step">
+              <div class="docs-flow__number">1</div>
+              <div class="docs-flow__text">
+                <strong>Vá em Desafios e toque no desafio</strong>
+                <p>Você verá as 3 datas propostas.</p>
+              </div>
+            </div>
+            <div class="docs-flow__connector"></div>
+            <div class="docs-flow__step">
+              <div class="docs-flow__number">2</div>
+              <div class="docs-flow__text">
+                <strong>Toque em "Escolher Data"</strong>
+                <p>Selecione a data que funciona para você e confirme. A partida será agendada!</p>
+              </div>
+            </div>
+          </div>
+
+          <h3>Registrar o resultado</h3>
+          <p>Após jogar a partida:</p>
+          <div class="docs-flow">
+            <div class="docs-flow__step">
+              <div class="docs-flow__number">1</div>
+              <div class="docs-flow__text">
+                <strong>Vá em Desafios e toque no desafio agendado</strong>
+                <p>Toque no botão "Registrar Resultado".</p>
+              </div>
+            </div>
+            <div class="docs-flow__connector"></div>
+            <div class="docs-flow__step">
+              <div class="docs-flow__number">2</div>
+              <div class="docs-flow__text">
+                <strong>Selecione o vencedor</strong>
+                <p>Toque no nome de quem venceu a partida.</p>
+              </div>
+            </div>
+            <div class="docs-flow__connector"></div>
+            <div class="docs-flow__step">
+              <div class="docs-flow__number">3</div>
+              <div class="docs-flow__text">
+                <strong>Informe o placar set a set</strong>
+                <p>Preencha o placar de cada set (ex: 6x4, 3x6, 7x5). O sistema calcula automaticamente.</p>
+              </div>
+            </div>
+            <div class="docs-flow__connector"></div>
+            <div class="docs-flow__step">
+              <div class="docs-flow__number">4</div>
+              <div class="docs-flow__text">
+                <strong>Confirme</strong>
+                <p>Toque em "Salvar Resultado". O ranking será atualizado instantaneamente!</p>
+              </div>
+            </div>
+          </div>
+
+          <h3>Adiamento por chuva</h3>
+          <p>Se está chovendo e vocês não conseguem jogar no prazo:</p>
+          <div class="docs-flow">
+            <div class="docs-flow__step">
+              <div class="docs-flow__number">1</div>
+              <div class="docs-flow__text">
+                <strong>Abra o desafio agendado</strong>
+                <p>Vá em Desafios e toque no desafio.</p>
+              </div>
+            </div>
+            <div class="docs-flow__connector"></div>
+            <div class="docs-flow__step">
+              <div class="docs-flow__number">2</div>
+              <div class="docs-flow__text">
+                <strong>Toque em "Adiamento por Chuva (+2 dias)"</strong>
+                <p>O prazo para jogar será estendido em mais 2 dias. Qualquer um dos jogadores pode solicitar, quantas vezes precisar.</p>
+              </div>
+            </div>
+          </div>
+
+          <h3>Regras importantes</h3>
+          <div class="docs-rules">
+            <div class="docs-rule">
+              <span class="docs-rule__num">1</span>
+              <div>
+                <strong>Só pode desafiar até 2 posições acima</strong>
+                <p>Se você está no 5º lugar, pode desafiar o 3º ou 4º, mas não o 2º.</p>
+              </div>
+            </div>
+            <div class="docs-rule">
+              <span class="docs-rule__num">2</span>
+              <div>
+                <strong>Se o desafiante vencer</strong>
+                <p>Ele toma a posição do adversário. O adversário desce 1 posição.</p>
+              </div>
+            </div>
+            <div class="docs-rule">
+              <span class="docs-rule__num">3</span>
+              <div>
+                <strong>Se o desafiado vencer</strong>
+                <p>Ninguém muda de posição. Tudo continua como está.</p>
+              </div>
+            </div>
+            <div class="docs-rule">
+              <span class="docs-rule__num">4</span>
+              <div>
+                <strong>Cooldown de 48h</strong>
+                <p>Após o resultado, o desafiante precisa esperar 48 horas para criar outro desafio.</p>
+              </div>
+            </div>
+            <div class="docs-rule">
+              <span class="docs-rule__num">5</span>
+              <div>
+                <strong>1 desafio por vez</strong>
+                <p>Você só pode ter 1 desafio ativo ao mesmo tempo.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========== QUADRAS ========== -->
+    <section id="quadras" class="section section--alt">
+      <div class="container container--narrow">
+        <div class="section__header reveal">
+          <span class="pill pill--green">Quadras</span>
+          <h2 class="section__title">Reservar Quadras</h2>
+          <p class="section__subtitle">Como reservar e cancelar horários nas quadras do clube.</p>
+        </div>
+
+        <div class="docs-content reveal">
+          <h3>Fazer uma reserva</h3>
+          <div class="docs-flow">
+            <div class="docs-flow__step">
+              <div class="docs-flow__number">1</div>
+              <div class="docs-flow__text">
+                <strong>Toque em "Quadras" no menu inferior</strong>
+                <p>Você verá a lista de quadras do clube com o tipo de piso e cobertura.</p>
+              </div>
+            </div>
+            <div class="docs-flow__connector"></div>
+            <div class="docs-flow__step">
+              <div class="docs-flow__number">2</div>
+              <div class="docs-flow__text">
+                <strong>Toque na quadra desejada</strong>
+                <p>Abre a tela de agenda com um calendário.</p>
+              </div>
+            </div>
+            <div class="docs-flow__connector"></div>
+            <div class="docs-flow__step">
+              <div class="docs-flow__number">3</div>
+              <div class="docs-flow__text">
+                <strong>Escolha a data no calendário</strong>
+                <p>Toque no dia desejado. Os horários disponíveis aparecerão abaixo.</p>
+              </div>
+            </div>
+            <div class="docs-flow__connector"></div>
+            <div class="docs-flow__step">
+              <div class="docs-flow__number">4</div>
+              <div class="docs-flow__text">
+                <strong>Toque no horário disponível (verde)</strong>
+                <p>Horários verdes estão livres. Horários vermelhos já foram reservados por outro jogador.</p>
+              </div>
+            </div>
+            <div class="docs-flow__connector"></div>
+            <div class="docs-flow__step">
+              <div class="docs-flow__number">5</div>
+              <div class="docs-flow__text">
+                <strong>Confirme a reserva</strong>
+                <p>Toque em "Reservar". Pronto! A reserva aparecerá em "Minhas Reservas".</p>
+              </div>
+            </div>
+          </div>
+
+          <h3>Ver e cancelar suas reservas</h3>
+          <div class="docs-flow">
+            <div class="docs-flow__step">
+              <div class="docs-flow__number">1</div>
+              <div class="docs-flow__text">
+                <strong>Na tela de Quadras, toque em "Minhas Reservas"</strong>
+                <p>É o botão no topo da tela. Mostra todas as suas reservas futuras.</p>
+              </div>
+            </div>
+            <div class="docs-flow__connector"></div>
+            <div class="docs-flow__step">
+              <div class="docs-flow__number">2</div>
+              <div class="docs-flow__text">
+                <strong>Para cancelar, toque na reserva e depois em "Cancelar"</strong>
+                <p>O horário ficará disponível novamente para outros jogadores.</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="docs-tip">
+            <strong>Dica:</strong> Você pode cancelar suas reservas a qualquer momento. Não há penalidade por cancelamento.
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========== ADMIN ========== -->
+    <section id="admin" class="section">
+      <div class="container container--narrow">
+        <div class="section__header reveal">
+          <span class="pill pill--gold">Administração</span>
+          <h2 class="section__title">Para Administradores</h2>
+          <p class="section__subtitle">Como gerenciar membros, quadras e configurações do clube.</p>
+        </div>
+
+        <div class="docs-content reveal">
+          <h3>Acessar a gestão do clube</h3>
+          <div class="docs-flow">
+            <div class="docs-flow__step">
+              <div class="docs-flow__number">1</div>
+              <div class="docs-flow__text">
+                <strong>Toque em "Perfil" no menu inferior</strong>
+                <p>É o último ícone do menu (canto direito).</p>
+              </div>
+            </div>
+            <div class="docs-flow__connector"></div>
+            <div class="docs-flow__step">
+              <div class="docs-flow__number">2</div>
+              <div class="docs-flow__text">
+                <strong>Toque em "Gerenciar Clube"</strong>
+                <p>Esse botão só aparece para administradores. Abre a tela de gestão com todas as opções.</p>
+              </div>
+            </div>
+          </div>
+
+          <h3>Aprovar novos membros</h3>
+          <p>Quando alguém solicitar entrada no clube:</p>
+          <div class="docs-flow">
+            <div class="docs-flow__step">
+              <div class="docs-flow__number">1</div>
+              <div class="docs-flow__text">
+                <strong>Você receberá uma notificação</strong>
+                <p>Ou acesse Gerenciar Clube e veja a seção "Solicitações Pendentes".</p>
+              </div>
+            </div>
+            <div class="docs-flow__connector"></div>
+            <div class="docs-flow__step">
+              <div class="docs-flow__number">2</div>
+              <div class="docs-flow__text">
+                <strong>Toque no ícone verde para aprovar ou vermelho para rejeitar</strong>
+                <p>O jogador será notificado e, se aprovado, aparecerá na última posição do ranking.</p>
+              </div>
+            </div>
+          </div>
+
+          <h3>Buscar e gerenciar membros</h3>
+          <p>Na tela de Gerenciar Clube, na seção "Membros":</p>
+          <ul>
+            <li><strong>Buscar:</strong> Use o campo de busca no topo para encontrar um membro pelo nome.</li>
+            <li><strong>Alterar função:</strong> Toque nos 3 pontinhos ao lado do membro e escolha "Tornar admin" ou "Tornar membro".</li>
+            <li><strong>Suspender:</strong> Toque nos 3 pontinhos e escolha "Suspender". O membro ficará impedido de participar de desafios e reservas até ser reativado. Ele receberá uma notificação.</li>
+            <li><strong>Reativar:</strong> Membros suspensos aparecem com um badge vermelho "Suspenso". Toque nos 3 pontinhos e escolha "Reativar" para devolver o acesso.</li>
+            <li><strong>Remover:</strong> Para remover definitivamente, escolha "Remover" no menu.</li>
+          </ul>
+
+          <div class="docs-tip">
+            <strong>Quando suspender?</strong> Use a suspensão para membros com pagamento pendente (a mensalidade é gerenciada fora do app). Ao regularizar, basta reativar.
+          </div>
+
+          <h3>Gerenciar quadras</h3>
+          <p>Na seção "Quadras / Campos" da tela de gestão:</p>
+          <ul>
+            <li><strong>Adicionar quadra:</strong> Toque em "Adicionar", escolha o esporte, nome, tipo de piso e se é coberta. Toque em "Criar".</li>
+            <li><strong>Editar:</strong> Toque nos 3 pontinhos da quadra e escolha "Editar".</li>
+            <li><strong>Desativar:</strong> Quadras desativadas não aparecem para reserva. Use para manutenção temporária.</li>
+          </ul>
+
+          <h3>Configurar horários da quadra</h3>
+          <p>Para definir os horários disponíveis para reserva:</p>
+          <div class="docs-flow">
+            <div class="docs-flow__step">
+              <div class="docs-flow__number">1</div>
+              <div class="docs-flow__text">
+                <strong>Toque nos 3 pontinhos da quadra e escolha "Horários"</strong>
+                <p>Abre a tela de configuração de horários.</p>
+              </div>
+            </div>
+            <div class="docs-flow__connector"></div>
+            <div class="docs-flow__step">
+              <div class="docs-flow__number">2</div>
+              <div class="docs-flow__text">
+                <strong>Escolha a duração do horário</strong>
+                <p>No topo, selecione quanto tempo dura cada horário (ex: 1 hora, 1h15, 1h30).</p>
+              </div>
+            </div>
+            <div class="docs-flow__connector"></div>
+            <div class="docs-flow__step">
+              <div class="docs-flow__number">3</div>
+              <div class="docs-flow__text">
+                <strong>Configure cada dia da semana</strong>
+                <p>Ligue ou desligue cada dia. Para os dias ativos, defina o horário de início e fim (ex: 07:00 até 21:00). O sistema mostra quantos horários serão gerados.</p>
+              </div>
+            </div>
+            <div class="docs-flow__connector"></div>
+            <div class="docs-flow__step">
+              <div class="docs-flow__number">4</div>
+              <div class="docs-flow__text">
+                <strong>Toque em "Gerar Horários"</strong>
+                <p>O sistema cria automaticamente todos os horários. Por exemplo, com duração de 1h e faixa 07:00–21:00, serão criados 14 horários (07:00, 08:00, 09:00...).</p>
+              </div>
+            </div>
+          </div>
+
+          <h3>Ativar a ambulância (lesão)</h3>
+          <p>Quando um jogador reportar uma lesão:</p>
+          <div class="docs-flow">
+            <div class="docs-flow__step">
+              <div class="docs-flow__number">1</div>
+              <div class="docs-flow__text">
+                <strong>Vá em Perfil &rarr; Gerenciar Clube &rarr; "Painel Admin"</strong>
+                <p>Ou acesse pelo menu administrativo.</p>
+              </div>
+            </div>
+            <div class="docs-flow__connector"></div>
+            <div class="docs-flow__step">
+              <div class="docs-flow__number">2</div>
+              <div class="docs-flow__text">
+                <strong>Toque em "Ambulâncias"</strong>
+                <p>Veja os jogadores e seus status.</p>
+              </div>
+            </div>
+            <div class="docs-flow__connector"></div>
+            <div class="docs-flow__step">
+              <div class="docs-flow__number">3</div>
+              <div class="docs-flow__text">
+                <strong>Ative a ambulância do jogador</strong>
+                <p>O jogador perderá 3 posições imediatamente e ficará protegido por 10 dias (não pode ser desafiado). Após os 10 dias, perde 1 posição por dia até a ambulância ser desativada.</p>
+              </div>
+            </div>
+          </div>
+
+          <h3>Compartilhar o código de convite</h3>
+          <p>Na tela de Gerenciar Clube, o código de convite aparece no topo do card do clube. Toque no ícone de copiar ao lado do código para copiá-lo e envie por WhatsApp ou outro meio para os jogadores que deseja convidar.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========== FAQ ========== -->
+    <section id="faq-docs" class="section section--alt">
+      <div class="container container--narrow">
+        <div class="section__header reveal">
+          <span class="pill pill--green">FAQ</span>
+          <h2 class="section__title">Perguntas Frequentes</h2>
+        </div>
+
+        <div class="faq-list reveal">
+          <div class="faq-item">
+            <button class="faq-question" aria-expanded="false">
+              Posso desafiar qualquer jogador?
+              <svg class="faq-chevron" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+            </button>
+            <div class="faq-answer">
+              <p>Não. Você só pode desafiar jogadores até 2 posições acima da sua. Além disso, o jogador não pode estar em cooldown, proteção, ambulância ou com desafio ativo.</p>
+            </div>
+          </div>
+
+          <div class="faq-item">
+            <button class="faq-question" aria-expanded="false">
+              O que acontece se eu não responder um desafio?
+              <svg class="faq-chevron" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+            </button>
+            <div class="faq-answer">
+              <p>Após 48 horas sem resposta, o sistema aplica WO automático &mdash; você perde o desafio e o desafiante toma sua posição no ranking.</p>
+            </div>
+          </div>
+
+          <div class="faq-item">
+            <button class="faq-question" aria-expanded="false">
+              Quem pode registrar o resultado da partida?
+              <svg class="faq-chevron" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+            </button>
+            <div class="faq-answer">
+              <p>Qualquer um dos dois jogadores pode registrar o resultado. Basta abrir o desafio e tocar em "Registrar Resultado".</p>
+            </div>
+          </div>
+
+          <div class="faq-item">
+            <button class="faq-question" aria-expanded="false">
+              Posso cancelar uma reserva de quadra?
+              <svg class="faq-chevron" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+            </button>
+            <div class="faq-answer">
+              <p>Sim! Vá em Quadras &rarr; Minhas Reservas, toque na reserva e escolha "Cancelar". O horário ficará disponível para outros jogadores.</p>
+            </div>
+          </div>
+
+          <div class="faq-item">
+            <button class="faq-question" aria-expanded="false">
+              Fui suspenso. O que fazer?
+              <svg class="faq-chevron" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+            </button>
+            <div class="faq-answer">
+              <p>A suspensão é feita pelo administrador do clube, geralmente por pendência de pagamento. Entre em contato com o admin para regularizar sua situação. Quando ele reativar sua conta, você voltará a jogar normalmente.</p>
+            </div>
+          </div>
+
+          <div class="faq-item">
+            <button class="faq-question" aria-expanded="false">
+              O app é gratuito?
+              <svg class="faq-chevron" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+            </button>
+            <div class="faq-answer">
+              <p>Sim, o SmashRank é 100% gratuito para jogadores e administradores.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========== CTA ========== -->
+    <section class="section section--cta">
+      <div class="container" style="text-align: center;">
+        <h2 class="section__title section__title--light reveal">Pronto para começar?</h2>
+        <p class="section__subtitle section__subtitle--light reveal">Baixe o SmashRank e entre no ranking do seu clube.</p>
+        <div class="reveal" style="margin-top: var(--space-lg);">
+          <a href="index.html#download" class="btn btn--gold btn--lg">Baixar App</a>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ========== FOOTER ========== -->
+  <footer class="footer">
+    <div class="container">
+      <div class="footer__grid">
+        <div class="footer__brand">
+          <div class="footer__logo">
+            <svg width="28" height="28" viewBox="0 0 32 32" fill="none" aria-hidden="true">
+              <circle cx="16" cy="16" r="14" fill="#C9A84C"/>
+              <path d="M8 4C12 10 12 22 8 28" stroke="#A38A30" stroke-width="2" fill="none"/>
+              <path d="M24 4C20 10 20 22 24 28" stroke="#A38A30" stroke-width="2" fill="none"/>
+            </svg>
+            <span>SmashRank</span>
+          </div>
+          <p class="footer__tagline">Ranking de tênis e gestão de clubes.</p>
+        </div>
+
+        <div class="footer__col">
+          <h4>Produto</h4>
+          <ul>
+            <li><a href="index.html#funcionalidades">Funcionalidades</a></li>
+            <li><a href="index.html#para-jogadores">Para Jogadores</a></li>
+            <li><a href="index.html#para-clubes">Para Clubes</a></li>
+          </ul>
+        </div>
+
+        <div class="footer__col">
+          <h4>Suporte</h4>
+          <ul>
+            <li><a href="docs.html">Guia de Uso</a></li>
+            <li><a href="index.html#faq">FAQ</a></li>
+          </ul>
+        </div>
+
+        <div class="footer__col">
+          <h4>Legal</h4>
+          <ul>
+            <li><a href="#">Termos de Uso</a></li>
+            <li><a href="#">Privacidade</a></li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="footer__bottom">
+        <p>&copy; 2026 SmashRank. Todos os direitos reservados.</p>
+      </div>
+    </div>
+  </footer>
+
+  <script src="js/main.js" defer></script>
+</body>
+</html>

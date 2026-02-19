@@ -29,11 +29,11 @@ class RankingHistoryModel {
   bool get isUnchanged => positionChange == 0;
 
   String get reasonLabel => switch (reason) {
-        'challenge_win' => 'Vitoria em desafio',
+        'challenge_win' => 'Vitória em desafio',
         'challenge_loss' => 'Derrota em desafio',
-        'ambulance_penalty' => 'Penalizacao ambulancia',
-        'ambulance_daily_penalty' => 'Penalizacao diaria ambulancia',
-        'overdue_penalty' => 'Penalizacao inadimplencia',
+        'ambulance_penalty' => 'Penalização ambulância',
+        'ambulance_daily_penalty' => 'Penalização diária ambulância',
+        'overdue_penalty' => 'Penalização inadimplência',
         'monthly_inactivity' => 'Inatividade mensal',
         'admin_adjustment' => 'Ajuste administrativo',
         'new_player' => 'Novo jogador',

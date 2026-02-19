@@ -70,7 +70,7 @@ class RankingHistoryScreen extends ConsumerWidget {
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          'Posicao mais baixa = melhor',
+                          'Posição mais baixa = melhor',
                           style:
                               Theme.of(context).textTheme.bodySmall?.copyWith(
                                     color: AppColors.onBackgroundLight,
@@ -88,7 +88,7 @@ class RankingHistoryScreen extends ConsumerWidget {
                 child: Padding(
                   padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
                   child: Text(
-                    'Historico de Alteracoes',
+                    'Histórico de Alterações',
                     style: Theme.of(context).textTheme.titleMedium?.copyWith(
                           fontWeight: FontWeight.bold,
                         ),
@@ -101,7 +101,7 @@ class RankingHistoryScreen extends ConsumerWidget {
                 const SliverFillRemaining(
                   child: Center(
                     child: Text(
-                      'Nenhuma alteracao de ranking registrada',
+                      'Nenhuma alteração de ranking registrada',
                       style: TextStyle(color: AppColors.onBackgroundLight),
                     ),
                   ),
@@ -137,7 +137,7 @@ class RankingHistoryScreen extends ConsumerWidget {
             children: [
               const Icon(Icons.error_outline, size: 48, color: AppColors.error),
               const SizedBox(height: 16),
-              Text('Erro ao carregar historico: $error'),
+              Text('Erro ao carregar histórico: $error'),
               const SizedBox(height: 16),
               ElevatedButton(
                 onPressed: () =>
@@ -173,19 +173,19 @@ class _PlayerSummaryCard extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.spaceAround,
           children: [
             _SummaryItem(
-              label: 'Posicao Atual',
+              label: 'Posição Atual',
               value: '#$position',
               icon: Icons.emoji_events,
               color: AppColors.secondary,
             ),
             _SummaryItem(
-              label: 'Melhor Posicao',
+              label: 'Melhor Posição',
               value: '#$bestPosition',
               icon: Icons.star,
               color: AppColors.gold,
             ),
             _SummaryItem(
-              label: 'Alteracoes',
+              label: 'Alterações',
               value: '$totalChanges',
               icon: Icons.swap_vert,
               color: AppColors.info,
@@ -329,7 +329,7 @@ class _TimelineEntry extends StatelessWidget {
                             Text(
                               oldPosition != null
                                   ? '#$oldPosition → #$newPosition'
-                                  : 'Posicao: #$newPosition',
+                                  : 'Posição: #$newPosition',
                               style: Theme.of(context)
                                   .textTheme
                                   .bodySmall

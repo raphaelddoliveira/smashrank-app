@@ -43,14 +43,14 @@ class CreateChallengeScreen extends ConsumerWidget {
                     const Icon(Icons.person_off, size: 64, color: AppColors.onBackgroundLight),
                     const SizedBox(height: 16),
                     const Text(
-                      'Nenhum oponente disponivel',
+                      'Nenhum oponente disponível',
                       style: TextStyle(fontSize: 16, color: AppColors.onBackgroundLight),
                     ),
                     const SizedBox(height: 8),
                     Text(
                       hasPositionGap
-                          ? 'Voce so pode desafiar jogadores ate 2 posicoes acima no ranking.'
-                          : 'Voce so pode desafiar jogadores acima de voce no ranking.',
+                          ? 'Você só pode desafiar jogadores até 2 posições acima no ranking.'
+                          : 'Você só pode desafiar jogadores acima de você no ranking.',
                       style: const TextStyle(fontSize: 13, color: AppColors.onBackgroundLight),
                       textAlign: TextAlign.center,
                     ),
@@ -76,8 +76,8 @@ class CreateChallengeScreen extends ConsumerWidget {
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 child: Text(
                   hasPositionGap
-                      ? 'Jogadores ate 2 posicoes acima de voce'
-                      : 'Todos os jogadores acima de voce',
+                      ? 'Jogadores até 2 posições acima de você'
+                      : 'Todos os jogadores acima de você',
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
                         color: AppColors.onBackgroundMedium,
                       ),

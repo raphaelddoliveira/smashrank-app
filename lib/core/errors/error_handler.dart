@@ -47,7 +47,7 @@ abstract final class ErrorHandler {
       return 'Confirme seu email antes de fazer login';
     }
     if (message.contains('User already registered')) {
-      return 'Este email ja esta cadastrado';
+      return 'Este email já está cadastrado';
     }
     if (message.contains('Password should be at least')) {
       return 'A senha deve ter pelo menos 6 caracteres';
@@ -58,7 +58,7 @@ abstract final class ErrorHandler {
   static String userFriendlyMessage(AppException exception) {
     return switch (exception) {
       AuthException() => exception.message,
-      NetworkException() => 'Erro de conexao. Verifique sua internet.',
+      NetworkException() => 'Erro de conexão. Verifique sua internet.',
       DatabaseException() => 'Erro ao acessar os dados. Tente novamente.',
       ValidationException() => exception.message,
       ChallengeException() => exception.message,

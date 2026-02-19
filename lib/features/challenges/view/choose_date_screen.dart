@@ -101,7 +101,7 @@ class _ChooseDateScreenState extends ConsumerState<ChooseDateScreen> {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                  'Opcao ${index + 1}',
+                                  'Opção ${index + 1}',
                                   style: TextStyle(
                                     fontSize: 12,
                                     color: isPast
@@ -134,7 +134,7 @@ class _ChooseDateScreenState extends ConsumerState<ChooseDateScreen> {
                                   ),
                                 if (date.isTomorrow)
                                   const Text(
-                                    'Amanha',
+                                    'Amanhã',
                                     style: TextStyle(
                                       fontSize: 12,
                                       color: AppColors.info,

@@ -21,6 +21,7 @@ import '../../features/challenges/view/choose_date_screen.dart';
 import '../../features/challenges/view/record_result_screen.dart';
 import '../../features/courts/view/courts_screen.dart';
 import '../../features/courts/view/court_schedule_screen.dart';
+import '../../features/courts/view/court_slots_screen.dart';
 import '../../features/courts/view/my_reservations_screen.dart';
 import '../../features/notifications/view/notifications_screen.dart';
 import '../../features/profile/view/profile_screen.dart';
@@ -188,6 +189,15 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         path: '/clubs/:clubId/manage',
         builder: (context, state) => ClubManagementScreen(
           clubId: state.pathParameters['clubId']!,
+        ),
+      ),
+
+      // Court slots admin (no bottom nav)
+      GoRoute(
+        path: '/courts/:courtId/slots',
+        builder: (context, state) => CourtSlotsScreen(
+          courtId: state.pathParameters['courtId']!,
+          courtName: state.uri.queryParameters['name'] ?? 'Quadra',
         ),
       ),
 

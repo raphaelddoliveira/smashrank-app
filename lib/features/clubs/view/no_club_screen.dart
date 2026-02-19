@@ -51,7 +51,7 @@ class NoClubScreen extends StatelessWidget {
             OutlinedButton.icon(
               onPressed: () => context.push('/clubs/join'),
               icon: const Icon(Icons.vpn_key_outlined),
-              label: const Text('Entrar com Codigo'),
+              label: const Text('Entrar com Código'),
               style: OutlinedButton.styleFrom(
                 minimumSize: const Size(double.infinity, 52),
               ),

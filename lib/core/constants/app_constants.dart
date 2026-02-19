@@ -5,7 +5,7 @@ abstract final class AppConstants {
   static const Duration challengerCooldown = Duration(hours: 48);
   static const Duration challengedProtection = Duration(hours: 24);
   static const Duration gameDeadline = Duration(days: 7);
-  static const Duration weatherExtension = Duration(days: 3);
+  static const Duration weatherExtension = Duration(days: 2);
   static const int minChallengesPerMonth = 1;
 
   // Ambulance rules

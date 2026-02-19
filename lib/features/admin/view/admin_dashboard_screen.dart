@@ -25,13 +25,13 @@ class AdminDashboardScreen extends StatelessWidget {
           _AdminCard(
             icon: Icons.people,
             title: 'Gerenciar Jogadores',
-            subtitle: 'Status, posicao, ambulancia',
+            subtitle: 'Status, posição, ambulância',
             onTap: () => context.push('/admin/players'),
           ),
           _AdminCard(
             icon: Icons.local_hospital,
-            title: 'Ambulancias',
-            subtitle: 'Ativar/desativar ambulancias',
+            title: 'Ambulâncias',
+            subtitle: 'Ativar/desativar ambulâncias',
             onTap: () => context.push('/admin/ambulances'),
           ),
           _AdminCard(
@@ -145,7 +145,7 @@ class AdminPlayersScreen extends ConsumerWidget {
                     if (member.isProtected)
                       const PopupMenuItem(
                           value: 'remove_protection',
-                          child: Text('Remover protecao')),
+                          child: Text('Remover proteção')),
                     if (member.isOnCooldown)
                       const PopupMenuItem(
                           value: 'remove_cooldown',
@@ -176,7 +176,7 @@ class AdminPlayersScreen extends ConsumerWidget {
           ? 'challenged_protection_until'
           : 'challenger_cooldown_until';
       final label =
-          action == 'remove_protection' ? 'Protecao' : 'Cooldown';
+          action == 'remove_protection' ? 'Proteção' : 'Cooldown';
 
       try {
         await client
@@ -218,7 +218,7 @@ class AdminAmbulanceScreen extends ConsumerWidget {
     final clubId = ref.watch(currentClubIdProvider);
     if (clubId == null) {
       return Scaffold(
-        appBar: AppBar(title: const Text('Ambulancias')),
+        appBar: AppBar(title: const Text('Ambulâncias')),
         body: const Center(child: Text('Selecione um clube primeiro')),
       );
     }
@@ -226,7 +226,7 @@ class AdminAmbulanceScreen extends ConsumerWidget {
     final membersAsync = ref.watch(_adminClubMembersProvider(clubId));
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Ambulancias')),
+      appBar: AppBar(title: const Text('Ambulâncias')),
       body: membersAsync.when(
         data: (members) {
           final activeMembers =
@@ -241,7 +241,7 @@ class AdminAmbulanceScreen extends ConsumerWidget {
                 Padding(
                   padding: const EdgeInsets.all(8),
                   child: Text(
-                    'Ambulancias Ativas (${ambulanceMembers.length})',
+                    'Ambulâncias Ativas (${ambulanceMembers.length})',
                     style: Theme.of(context)
                         .textTheme
                         .titleSmall
@@ -291,7 +291,7 @@ class AdminAmbulanceScreen extends ConsumerWidget {
                       trailing: OutlinedButton(
                         onPressed: () =>
                             _activateAmbulance(context, ref, m, clubId),
-                        child: const Text('Ambulancia',
+                        child: const Text('Ambulância',
                             style: TextStyle(fontSize: 12)),
                       ),
                     ),
@@ -310,13 +310,13 @@ class AdminAmbulanceScreen extends ConsumerWidget {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Ativar Ambulancia'),
+        title: const Text('Ativar Ambulância'),
         content: Text(
-          'Ativar ambulancia para ${member.playerName} (#${member.rankingPosition ?? '-'})?\n\n'
-          'Isso ira:\n'
-          '- Penalizar -3 posicoes\n'
-          '- Ativar protecao de 10 dias\n'
-          '- Apos 10 dias: -1 posicao/dia',
+          'Ativar ambulância para ${member.playerName} (#${member.rankingPosition ?? '-'})?\n\n'
+          'Isso irá:\n'
+          '- Penalizar -3 posições\n'
+          '- Ativar proteção de 10 dias\n'
+          '- Após 10 dias: -1 posição/dia',
         ),
         actions: [
           TextButton(
@@ -339,7 +339,7 @@ class AdminAmbulanceScreen extends ConsumerWidget {
                 );
                 if (context.mounted) {
                   SnackbarUtils.showSuccess(
-                      context, 'Ambulancia ativada para ${member.playerName}');
+                      context, 'Ambulância ativada para ${member.playerName}');
                   ref.invalidate(_adminClubMembersProvider(clubId));
                 }
               } catch (e) {
@@ -360,9 +360,9 @@ class AdminAmbulanceScreen extends ConsumerWidget {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Desativar Ambulancia'),
+        title: const Text('Desativar Ambulância'),
         content:
-            Text('Desativar ambulancia de ${member.playerName}?'),
+            Text('Desativar ambulância de ${member.playerName}?'),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(),
@@ -382,7 +382,7 @@ class AdminAmbulanceScreen extends ConsumerWidget {
                 );
                 if (context.mounted) {
                   SnackbarUtils.showSuccess(context,
-                      'Ambulancia desativada para ${member.playerName}');
+                      'Ambulância desativada para ${member.playerName}');
                   ref.invalidate(_adminClubMembersProvider(clubId));
                 }
               } catch (e) {

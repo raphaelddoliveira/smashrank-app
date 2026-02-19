@@ -186,7 +186,7 @@ class _StatusIndicators extends StatelessWidget {
       children: [
         if (member.isOnAmbulance)
           const Tooltip(
-            message: 'Ambulancia ativa',
+            message: 'Ambulância ativa',
             child: Icon(Icons.local_hospital, color: AppColors.ambulanceActive, size: 18),
           ),
         if (member.isOnCooldown)

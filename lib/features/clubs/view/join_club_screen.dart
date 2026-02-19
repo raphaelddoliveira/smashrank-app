@@ -29,7 +29,7 @@ class _JoinClubScreenState extends ConsumerState<JoinClubScreen> {
   Future<void> _submit() async {
     final code = _codeController.text.trim();
     if (code.isEmpty) {
-      SnackbarUtils.showError(context, 'Digite o codigo de convite');
+      SnackbarUtils.showError(context, 'Digite o código de convite');
       return;
     }
 
@@ -48,7 +48,7 @@ class _JoinClubScreenState extends ConsumerState<JoinClubScreen> {
       if (mounted) {
         SnackbarUtils.showSuccess(
           context,
-          'Solicitacao enviada! Aguarde aprovacao do admin.',
+          'Solicitação enviada! Aguarde aprovação do admin.',
         );
         context.pop();
       }
@@ -80,7 +80,7 @@ class _JoinClubScreenState extends ConsumerState<JoinClubScreen> {
             ),
             const SizedBox(height: 24),
             Text(
-              'Entre com o codigo de convite',
+              'Entre com o código de convite',
               style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                 fontWeight: FontWeight.w700,
               ),
@@ -88,7 +88,7 @@ class _JoinClubScreenState extends ConsumerState<JoinClubScreen> {
             ),
             const SizedBox(height: 8),
             Text(
-              'Peca o codigo ao admin do clube',
+              'Peça o código ao admin do clube',
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                 color: AppColors.onBackgroundLight,
               ),
@@ -98,7 +98,7 @@ class _JoinClubScreenState extends ConsumerState<JoinClubScreen> {
             TextFormField(
               controller: _codeController,
               decoration: const InputDecoration(
-                labelText: 'Codigo de convite',
+                labelText: 'Código de convite',
                 hintText: 'Ex: A1B2C3D4',
                 prefixIcon: Icon(Icons.vpn_key_outlined),
               ),

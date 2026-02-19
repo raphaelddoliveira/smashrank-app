@@ -39,7 +39,7 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
       setState(() => _emailSent = true);
       if (mounted) {
         SnackbarUtils.showSuccess(
-            context, 'Email de recuperacao enviado!');
+            context, 'Email de recuperação enviado!');
       }
     } catch (_) {
       if (mounted) {

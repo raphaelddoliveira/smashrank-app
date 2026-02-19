@@ -20,11 +20,11 @@ class CourtSlotModel {
   String get dayLabel => switch (dayOfWeek) {
         0 => 'Domingo',
         1 => 'Segunda',
-        2 => 'Terca',
+        2 => 'Terça',
         3 => 'Quarta',
         4 => 'Quinta',
         5 => 'Sexta',
-        6 => 'Sabado',
+        6 => 'Sábado',
         _ => '',
       };
 
@@ -35,7 +35,7 @@ class CourtSlotModel {
         3 => 'Qua',
         4 => 'Qui',
         5 => 'Sex',
-        6 => 'Sab',
+        6 => 'Sáb',
         _ => '',
       };
 

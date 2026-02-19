@@ -39,7 +39,7 @@ class CourtsScreen extends ConsumerWidget {
                   const Icon(Icons.event_available, size: 64, color: AppColors.onBackgroundLight),
                   const SizedBox(height: 16),
                   Text(
-                    facilityConfig?.emptyState ?? 'Nenhum local disponivel',
+                    facilityConfig?.emptyState ?? 'Nenhum local disponível',
                     style: const TextStyle(fontSize: 16, color: AppColors.onBackgroundLight),
                   ),
                 ],

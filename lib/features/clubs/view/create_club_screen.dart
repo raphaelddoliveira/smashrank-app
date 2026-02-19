@@ -114,7 +114,7 @@ class _CreateClubScreenState extends ConsumerState<CreateClubScreen> {
               TextFormField(
                 controller: _descriptionController,
                 decoration: const InputDecoration(
-                  labelText: 'Descricao (opcional)',
+                  labelText: 'Descrição (opcional)',
                   hintText: 'Ex: Ranking dos jogadores da academia...',
                   prefixIcon: Icon(Icons.description_outlined),
                 ),

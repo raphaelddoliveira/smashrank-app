@@ -16,7 +16,7 @@ class RankingChart extends StatelessWidget {
         height: 200,
         child: Center(
           child: Text(
-            'Historico insuficiente para gerar grafico',
+            'Histórico insuficiente para gerar gráfico',
             style: TextStyle(color: AppColors.onBackgroundLight),
           ),
         ),

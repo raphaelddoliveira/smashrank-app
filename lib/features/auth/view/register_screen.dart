@@ -146,7 +146,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                   obscureText: _obscurePassword,
                   validator: (value) {
                     if (value != _passwordController.text) {
-                      return 'Senhas nao conferem';
+                      return 'Senhas não conferem';
                     }
                     return null;
                   },
@@ -169,7 +169,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    const Text('Ja tem conta? '),
+                    const Text('Já tem conta? '),
                     TextButton(
                       onPressed: () => context.pop(),
                       child: const Text('Fazer login'),

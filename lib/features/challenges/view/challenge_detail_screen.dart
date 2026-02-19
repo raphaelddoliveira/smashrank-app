@@ -157,6 +157,13 @@ class _ChallengeDetailBody extends ConsumerWidget {
                       value: challenge.playDeadline!.countdown(),
                       color: AppColors.warning,
                     ),
+                  if (challenge.weatherExtensionDays > 0)
+                    _InfoRow(
+                      icon: Icons.water_drop,
+                      label: 'Extensão por chuva',
+                      value: '+${challenge.weatherExtensionDays} dias',
+                      color: AppColors.info,
+                    ),
                   if (challenge.completedAt != null)
                     _InfoRow(
                       icon: Icons.check_circle,
@@ -344,6 +351,17 @@ class _ChallengeDetailBody extends ConsumerWidget {
             label: const Text('Registrar Resultado'),
           ),
         );
+        actions.add(const SizedBox(height: 8));
+        actions.add(
+          OutlinedButton.icon(
+            onPressed: () => _confirmWeatherExtension(context, ref),
+            icon: const Icon(Icons.water_drop, color: AppColors.info),
+            label: Text(
+              'Adiamento por Chuva (+2 dias)',
+              style: TextStyle(color: AppColors.info),
+            ),
+          ),
+        );
         break;
 
       default:
@@ -351,6 +369,41 @@ class _ChallengeDetailBody extends ConsumerWidget {
     }
 
     return actions;
+  }
+
+  void _confirmWeatherExtension(BuildContext context, WidgetRef ref) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Adiamento por Chuva'),
+        content: Text(
+          'O prazo para jogar será estendido em +2 dias devido à chuva.\n\n'
+          '${challenge.weatherExtensionDays > 0 ? 'Extensão atual: +${challenge.weatherExtensionDays} dias\nNovo total: +${challenge.weatherExtensionDays + 2} dias' : 'Novo prazo: +2 dias além do original'}',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: const Text('Cancelar'),
+          ),
+          ElevatedButton.icon(
+            onPressed: () async {
+              Navigator.of(ctx).pop();
+              final success = await ref
+                  .read(challengeActionProvider.notifier)
+                  .requestWeatherExtension(challengeId);
+              if (success && context.mounted) {
+                SnackbarUtils.showSuccess(
+                    context, 'Prazo estendido em +2 dias por chuva');
+                ref.invalidate(challengeDetailProvider(challengeId));
+                ref.invalidate(activeChallengesProvider);
+              }
+            },
+            icon: const Icon(Icons.water_drop),
+            label: const Text('Confirmar'),
+          ),
+        ],
+      ),
+    );
   }
 
   void _confirmCancel(BuildContext context, WidgetRef ref) {
@@ -427,7 +480,7 @@ class _PlayerRow extends StatelessWidget {
                   ),
                   if (isCurrentUser)
                     const Text(
-                      ' (Voce)',
+                      ' (Você)',
                       style:
                           TextStyle(fontSize: 12, color: AppColors.primary),
                     ),

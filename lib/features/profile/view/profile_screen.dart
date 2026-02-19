@@ -54,7 +54,7 @@ class ProfileScreen extends ConsumerWidget {
       body: playerAsync.when(
         data: (player) {
           if (player == null) {
-            return const Center(child: Text('Jogador nao encontrado'));
+            return const Center(child: Text('Jogador não encontrado'));
           }
 
           final member = clubMember.valueOrNull;
@@ -69,7 +69,7 @@ class ProfileScreen extends ConsumerWidget {
                   children: [
                     Expanded(
                       child: StatsCard(
-                        label: 'Posicao',
+                        label: 'Posição',
                         value: '#${member?.rankingPosition ?? '-'}',
                         icon: Icons.emoji_events,
                         color: AppColors.gold,
@@ -78,7 +78,7 @@ class ProfileScreen extends ConsumerWidget {
                     const SizedBox(width: 12),
                     Expanded(
                       child: StatsCard(
-                        label: 'Desafios/Mes',
+                        label: 'Desafios/Mês',
                         value: '${member?.challengesThisMonth ?? 0}',
                         icon: Icons.flash_on,
                         color: AppColors.primary,
@@ -92,7 +92,7 @@ class ProfileScreen extends ConsumerWidget {
                     Expanded(
                       child: StatsCard(
                         label: 'Status',
-                        value: player.status.name,
+                        value: player.status.label,
                         icon: Icons.circle,
                         color: player.isActive
                             ? AppColors.success
@@ -103,7 +103,7 @@ class ProfileScreen extends ConsumerWidget {
                     Expanded(
                       child: StatsCard(
                         label: 'Mensalidade',
-                        value: player.feeStatus.name,
+                        value: player.feeStatus.label,
                         icon: Icons.payments,
                         color: player.hasFeeOverdue
                             ? AppColors.error
@@ -126,15 +126,15 @@ class ProfileScreen extends ConsumerWidget {
                   if (member.isProtected)
                     _buildInfoTile(
                       icon: Icons.shield,
-                      title: 'Protecao ativa',
-                      subtitle: 'Voce esta protegido de novos desafios',
+                      title: 'Proteção ativa',
+                      subtitle: 'Você está protegido de novos desafios',
                       color: AppColors.info,
                     ),
                   if (member.isOnAmbulance)
                     _buildInfoTile(
                       icon: Icons.local_hospital,
-                      title: 'Ambulancia ativa',
-                      subtitle: 'Voce esta em pausa no ranking',
+                      title: 'Ambulância ativa',
+                      subtitle: 'Você está em pausa no ranking',
                       color: AppColors.ambulanceActive,
                     ),
                 ],

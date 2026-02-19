@@ -46,8 +46,8 @@ class _ProposeDatesScreenState extends ConsumerState<ProposeDatesScreen> {
                         const SizedBox(width: 8),
                         Expanded(
                           child: Text(
-                            'Proponha 3 datas e horarios para o desafio. '
-                            'O desafiante escolhera uma delas.',
+                            'Proponha 3 datas e horários para o desafio. '
+                            'O desafiante escolherá uma delas.',
                             style: Theme.of(context)
                                 .textTheme
                                 .bodySmall
@@ -178,7 +178,7 @@ class _DatePickerCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Opcao $number',
+                      'Opção $number',
                       style: const TextStyle(
                           fontSize: 12, color: AppColors.onBackgroundLight),
                     ),
@@ -228,7 +228,7 @@ class _DatePickerCard extends StatelessWidget {
       initialTime: selectedDate != null
           ? TimeOfDay.fromDateTime(selectedDate!)
           : const TimeOfDay(hour: 18, minute: 0),
-      helpText: 'Selecione o horario',
+      helpText: 'Selecione o horário',
       cancelText: 'Cancelar',
       confirmText: 'OK',
     );

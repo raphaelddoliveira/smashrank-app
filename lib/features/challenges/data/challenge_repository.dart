@@ -225,7 +225,47 @@ class ChallengeRepository {
         'player_id': otherPlayerId,
         'type': 'general',
         'title': 'Desafio Cancelado',
-        'body': 'Um desafio em que voce participava foi cancelado.',
+        'body': 'Um desafio em que você participava foi cancelado.',
+        'data': {'challenge_id': challengeId},
+        'club_id': challenge['club_id'],
+      });
+    } catch (e) {
+      throw ErrorHandler.handle(e);
+    }
+  }
+
+  /// Request weather extension (+2 days) for a scheduled challenge
+  Future<void> requestWeatherExtension(String challengeId) async {
+    try {
+      final playerId = await _getCurrentPlayerId();
+
+      final challenge = await _client
+          .from(SupabaseConstants.challengesTable)
+          .select('challenger_id, challenged_id, club_id, weather_extension_days, play_deadline')
+          .eq('id', challengeId)
+          .single();
+
+      final currentExtension = challenge['weather_extension_days'] as int? ?? 0;
+      final currentDeadline = DateTime.parse(challenge['play_deadline'] as String);
+
+      await _client
+          .from(SupabaseConstants.challengesTable)
+          .update({
+            'weather_extension_days': currentExtension + 2,
+            'play_deadline': currentDeadline.add(const Duration(days: 2)).toIso8601String(),
+          })
+          .eq('id', challengeId);
+
+      // Notify the other player
+      final otherPlayerId = challenge['challenger_id'] == playerId
+          ? challenge['challenged_id']
+          : challenge['challenger_id'];
+
+      await _client.from(SupabaseConstants.notificationsTable).insert({
+        'player_id': otherPlayerId,
+        'type': 'general',
+        'title': 'Adiamento por Chuva',
+        'body': 'O prazo do desafio foi estendido em +2 dias devido a chuva. Total: +${currentExtension + 2} dias.',
         'data': {'challenge_id': challengeId},
         'club_id': challenge['club_id'],
       });

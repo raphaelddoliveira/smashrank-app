@@ -32,7 +32,7 @@ class MyReservationsScreen extends ConsumerWidget {
                   ),
                   SizedBox(height: 8),
                   Text(
-                    'Reserve um horario na aba Reservas',
+                    'Reserve um horário na aba Reservas',
                     style: TextStyle(fontSize: 13, color: AppColors.onBackgroundLight),
                   ),
                 ],

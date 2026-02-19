@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/utils/snackbar_utils.dart';
 import '../../../shared/models/club_member_model.dart';
@@ -28,7 +29,6 @@ class ClubManagementScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final clubAsync = ref.watch(currentClubProvider);
-    final membersAsync = ref.watch(clubMembersProvider(clubId));
     final requestsAsync = ref.watch(clubJoinRequestsProvider(clubId));
     final isAdmin = ref.watch(isClubAdminProvider);
 
@@ -40,7 +40,7 @@ class ClubManagementScreen extends ConsumerWidget {
       body: clubAsync.when(
         data: (club) {
           if (club == null) {
-            return const Center(child: Text('Clube nao encontrado'));
+            return const Center(child: Text('Clube não encontrado'));
           }
           return ListView(
             padding: const EdgeInsets.all(16),
@@ -102,7 +102,7 @@ class ClubManagementScreen extends ConsumerWidget {
                               icon: const Icon(Icons.copy, size: 18),
                               onPressed: () {
                                 Clipboard.setData(ClipboardData(text: club.inviteCode));
-                                SnackbarUtils.showSuccess(context, 'Codigo copiado!');
+                                SnackbarUtils.showSuccess(context, 'Código copiado!');
                               },
                               padding: EdgeInsets.zero,
                               constraints: const BoxConstraints(),
@@ -132,7 +132,7 @@ class ClubManagementScreen extends ConsumerWidget {
                       return Row(
                         children: [
                           Text(
-                            'Solicitacoes Pendentes',
+                            'Solicitações Pendentes',
                             style: Theme.of(context).textTheme.titleMedium?.copyWith(
                               fontWeight: FontWeight.w700,
                             ),
@@ -155,13 +155,13 @@ class ClubManagementScreen extends ConsumerWidget {
                       );
                     },
                     loading: () => Text(
-                      'Solicitacoes Pendentes',
+                      'Solicitações Pendentes',
                       style: Theme.of(context).textTheme.titleMedium?.copyWith(
                         fontWeight: FontWeight.w700,
                       ),
                     ),
                     error: (_, _) => Text(
-                      'Solicitacoes Pendentes',
+                      'Solicitações Pendentes',
                       style: Theme.of(context).textTheme.titleMedium?.copyWith(
                         fontWeight: FontWeight.w700,
                       ),
@@ -174,7 +174,7 @@ class ClubManagementScreen extends ConsumerWidget {
                       return const Card(
                         child: ListTile(
                           leading: Icon(Icons.check_circle_outline, color: AppColors.onBackgroundLight),
-                          title: Text('Nenhuma solicitacao pendente'),
+                          title: Text('Nenhuma solicitação pendente'),
                         ),
                       );
                     }
@@ -190,7 +190,7 @@ class ClubManagementScreen extends ConsumerWidget {
                             ref.invalidate(clubJoinRequestsProvider(clubId));
                             ref.invalidate(clubMembersProvider(clubId));
                             if (context.mounted) {
-                              SnackbarUtils.showSuccess(context, 'Solicitacao aprovada!');
+                              SnackbarUtils.showSuccess(context, 'Solicitação aprovada!');
                             }
                           } catch (e) {
                             if (context.mounted) {
@@ -206,7 +206,7 @@ class ClubManagementScreen extends ConsumerWidget {
                                 .rejectJoinRequest(req['id'], player.authId);
                             ref.invalidate(clubJoinRequestsProvider(clubId));
                             if (context.mounted) {
-                              SnackbarUtils.showSuccess(context, 'Solicitacao rejeitada');
+                              SnackbarUtils.showSuccess(context, 'Solicitação rejeitada');
                             }
                           } catch (e) {
                             if (context.mounted) {
@@ -224,7 +224,7 @@ class ClubManagementScreen extends ConsumerWidget {
                   error: (e, _) => Card(
                     child: ListTile(
                       leading: const Icon(Icons.error_outline, color: AppColors.error),
-                      title: const Text('Erro ao carregar solicitacoes'),
+                      title: const Text('Erro ao carregar solicitações'),
                       subtitle: Text('$e', style: const TextStyle(fontSize: 12)),
                     ),
                   ),
@@ -232,56 +232,8 @@ class ClubManagementScreen extends ConsumerWidget {
                 const SizedBox(height: 16),
               ],
 
-              // Members list
-              Padding(
-                padding: const EdgeInsets.only(left: 4, bottom: 8),
-                child: membersAsync.when(
-                  data: (members) => Text(
-                    'Membros (${members.length})',
-                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                  loading: () => const Text('Membros'),
-                  error: (_, _) => const Text('Membros'),
-                ),
-              ),
-              membersAsync.when(
-                data: (members) => Column(
-                  children: members.map((member) => _MemberTile(
-                    member: member,
-                    isAdmin: isAdmin,
-                    onToggleRole: isAdmin
-                        ? () async {
-                            final newRole = member.isClubAdmin ? 'member' : 'admin';
-                            await ref.read(clubRepositoryProvider)
-                                .updateMemberRole(member.id, newRole);
-                            ref.invalidate(clubMembersProvider(clubId));
-                          }
-                        : null,
-                    onRemove: isAdmin
-                        ? () async {
-                            final player = ref.read(currentPlayerProvider).valueOrNull;
-                            if (player == null) return;
-                            try {
-                              await ref.read(clubRepositoryProvider)
-                                  .removeMember(member.id, player.authId);
-                              ref.invalidate(clubMembersProvider(clubId));
-                              if (context.mounted) {
-                                SnackbarUtils.showSuccess(context, 'Membro removido');
-                              }
-                            } catch (e) {
-                              if (context.mounted) {
-                                SnackbarUtils.showError(context, 'Erro: $e');
-                              }
-                            }
-                          }
-                        : null,
-                  )).toList(),
-                ),
-                loading: () => const Center(child: CircularProgressIndicator()),
-                error: (e, _) => Text('Erro: $e'),
-              ),
+              // Members list with search
+              _MembersSection(clubId: clubId, isAdmin: isAdmin),
 
               // ─── Courts section ───
               const SizedBox(height: 24),
@@ -323,7 +275,7 @@ class _RequestTile extends StatelessWidget {
           ),
         ),
         title: Text(name, style: const TextStyle(fontWeight: FontWeight.w600)),
-        subtitle: const Text('Aguardando aprovacao'),
+        subtitle: const Text('Aguardando aprovação'),
         trailing: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -344,64 +296,331 @@ class _RequestTile extends StatelessWidget {
   }
 }
 
+// ─── Members Section (with search + suspend) ───
+
+class _MembersSection extends ConsumerStatefulWidget {
+  final String clubId;
+  final bool isAdmin;
+
+  const _MembersSection({required this.clubId, required this.isAdmin});
+
+  @override
+  ConsumerState<_MembersSection> createState() => _MembersSectionState();
+}
+
+class _MembersSectionState extends ConsumerState<_MembersSection> {
+  final _searchController = TextEditingController();
+  String _searchQuery = '';
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final membersAsync = ref.watch(clubMembersProvider(widget.clubId));
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.only(left: 4, bottom: 8),
+          child: membersAsync.when(
+            data: (members) {
+              final activeCount = members.where((m) => m.isActive).length;
+              final inactiveCount = members.length - activeCount;
+              return Text(
+                'Membros ($activeCount)${inactiveCount > 0 ? ' · $inactiveCount suspensos' : ''}',
+                style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.w700,
+                ),
+              );
+            },
+            loading: () => const Text('Membros'),
+            error: (_, _) => const Text('Membros'),
+          ),
+        ),
+        // Search field
+        Padding(
+          padding: const EdgeInsets.only(bottom: 12),
+          child: TextField(
+            controller: _searchController,
+            decoration: InputDecoration(
+              hintText: 'Buscar membro...',
+              prefixIcon: const Icon(Icons.search, size: 20),
+              suffixIcon: _searchQuery.isNotEmpty
+                  ? IconButton(
+                      icon: const Icon(Icons.clear, size: 18),
+                      onPressed: () {
+                        _searchController.clear();
+                        setState(() => _searchQuery = '');
+                      },
+                    )
+                  : null,
+              isDense: true,
+              contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+              border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+            ),
+            onChanged: (value) => setState(() => _searchQuery = value),
+          ),
+        ),
+        // Members list
+        membersAsync.when(
+          data: (members) {
+            final query = _searchQuery.toLowerCase().trim();
+            final filtered = query.isEmpty
+                ? members
+                : members.where((m) =>
+                    m.playerName.toLowerCase().contains(query) ||
+                    (m.playerNickname?.toLowerCase().contains(query) ?? false)
+                  ).toList();
+
+            if (filtered.isEmpty && query.isNotEmpty) {
+              return const Padding(
+                padding: EdgeInsets.symmetric(vertical: 16),
+                child: Center(
+                  child: Text(
+                    'Nenhum membro encontrado',
+                    style: TextStyle(color: AppColors.onBackgroundLight),
+                  ),
+                ),
+              );
+            }
+
+            return Column(
+              children: filtered.map((member) => _MemberTile(
+                member: member,
+                isAdmin: widget.isAdmin,
+                onToggleRole: widget.isAdmin && member.isActive
+                    ? () async {
+                        final newRole = member.isClubAdmin ? 'member' : 'admin';
+                        await ref.read(clubRepositoryProvider)
+                            .updateMemberRole(member.id, newRole);
+                        ref.invalidate(clubMembersProvider(widget.clubId));
+                      }
+                    : null,
+                onSuspend: widget.isAdmin && member.isActive
+                    ? () => _confirmSuspend(member)
+                    : null,
+                onUnsuspend: widget.isAdmin && !member.isActive
+                    ? () => _confirmUnsuspend(member)
+                    : null,
+                onRemove: widget.isAdmin
+                    ? () async {
+                        final player = ref.read(currentPlayerProvider).valueOrNull;
+                        if (player == null) return;
+                        try {
+                          await ref.read(clubRepositoryProvider)
+                              .removeMember(member.id, player.authId);
+                          ref.invalidate(clubMembersProvider(widget.clubId));
+                          if (mounted) {
+                            SnackbarUtils.showSuccess(context, 'Membro removido');
+                          }
+                        } catch (e) {
+                          if (mounted) {
+                            SnackbarUtils.showError(context, 'Erro: $e');
+                          }
+                        }
+                      }
+                    : null,
+              )).toList(),
+            );
+          },
+          loading: () => const Center(child: CircularProgressIndicator()),
+          error: (e, _) => Text('Erro: $e'),
+        ),
+      ],
+    );
+  }
+
+  void _confirmSuspend(ClubMemberModel member) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Suspender membro?'),
+        content: Text(
+          '${member.playerName} será suspenso e não poderá participar de desafios ou reservas.\n\n'
+          'Você poderá reativá-lo depois.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Cancelar'),
+          ),
+          FilledButton(
+            style: FilledButton.styleFrom(backgroundColor: AppColors.warning),
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Suspender'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true) {
+      try {
+        await ref.read(clubRepositoryProvider).suspendMember(member.id);
+        ref.invalidate(clubMembersProvider(widget.clubId));
+        if (mounted) {
+          SnackbarUtils.showSuccess(context, '${member.playerName} foi suspenso');
+        }
+      } catch (e) {
+        if (mounted) {
+          SnackbarUtils.showError(context, 'Erro ao suspender: $e');
+        }
+      }
+    }
+  }
+
+  void _confirmUnsuspend(ClubMemberModel member) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Reativar membro?'),
+        content: Text(
+          '${member.playerName} será reativado e poderá voltar a participar normalmente.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Cancelar'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Reativar'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true) {
+      try {
+        await ref.read(clubRepositoryProvider).unsuspendMember(member.id);
+        ref.invalidate(clubMembersProvider(widget.clubId));
+        if (mounted) {
+          SnackbarUtils.showSuccess(context, '${member.playerName} foi reativado');
+        }
+      } catch (e) {
+        if (mounted) {
+          SnackbarUtils.showError(context, 'Erro ao reativar: $e');
+        }
+      }
+    }
+  }
+}
+
 class _MemberTile extends StatelessWidget {
   final ClubMemberModel member;
   final bool isAdmin;
   final VoidCallback? onToggleRole;
   final VoidCallback? onRemove;
+  final VoidCallback? onSuspend;
+  final VoidCallback? onUnsuspend;
 
   const _MemberTile({
     required this.member,
     required this.isAdmin,
     this.onToggleRole,
     this.onRemove,
+    this.onSuspend,
+    this.onUnsuspend,
   });
 
   @override
   Widget build(BuildContext context) {
+    final isSuspended = !member.isActive;
+
     return Card(
       margin: const EdgeInsets.only(bottom: 8),
-      child: ListTile(
-        leading: CircleAvatar(
-          backgroundColor: member.isClubAdmin ? AppColors.secondary : AppColors.primaryLight,
-          child: Text(
-            '#${member.rankingPosition ?? '-'}',
-            style: const TextStyle(
-              color: Colors.white,
-              fontWeight: FontWeight.w700,
-              fontSize: 13,
+      child: Opacity(
+        opacity: isSuspended ? 0.6 : 1.0,
+        child: ListTile(
+          leading: CircleAvatar(
+            backgroundColor: isSuspended
+                ? AppColors.error.withAlpha(40)
+                : member.isClubAdmin
+                    ? AppColors.secondary
+                    : AppColors.primaryLight,
+            child: Text(
+              '#${member.rankingPosition ?? '-'}',
+              style: TextStyle(
+                color: isSuspended ? AppColors.error : Colors.white,
+                fontWeight: FontWeight.w700,
+                fontSize: 13,
+              ),
             ),
           ),
-        ),
-        title: Text(
-          member.playerName,
-          style: const TextStyle(fontWeight: FontWeight.w600),
-        ),
-        subtitle: Text(
-          member.isClubAdmin ? 'Admin' : 'Membro',
-          style: TextStyle(
-            color: member.isClubAdmin ? AppColors.secondary : AppColors.onBackgroundLight,
-            fontWeight: member.isClubAdmin ? FontWeight.w600 : FontWeight.normal,
+          title: Row(
+            children: [
+              Flexible(
+                child: Text(
+                  member.playerName,
+                  style: const TextStyle(fontWeight: FontWeight.w600),
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+              if (isSuspended) ...[
+                const SizedBox(width: 8),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: AppColors.error.withAlpha(25),
+                    borderRadius: BorderRadius.circular(4),
+                    border: Border.all(color: AppColors.error.withAlpha(60)),
+                  ),
+                  child: const Text(
+                    'Suspenso',
+                    style: TextStyle(
+                      fontSize: 10,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.error,
+                    ),
+                  ),
+                ),
+              ],
+            ],
           ),
+          subtitle: Text(
+            member.isClubAdmin ? 'Admin' : 'Membro',
+            style: TextStyle(
+              color: member.isClubAdmin ? AppColors.secondary : AppColors.onBackgroundLight,
+              fontWeight: member.isClubAdmin ? FontWeight.w600 : FontWeight.normal,
+            ),
+          ),
+          trailing: isAdmin
+              ? PopupMenuButton<String>(
+                  onSelected: (action) {
+                    if (action == 'toggle_role') onToggleRole?.call();
+                    if (action == 'remove') onRemove?.call();
+                    if (action == 'suspend') onSuspend?.call();
+                    if (action == 'unsuspend') onUnsuspend?.call();
+                  },
+                  itemBuilder: (_) => [
+                    if (!isSuspended)
+                      PopupMenuItem(
+                        value: 'toggle_role',
+                        child: Text(member.isClubAdmin ? 'Tornar membro' : 'Tornar admin'),
+                      ),
+                    if (isSuspended)
+                      const PopupMenuItem(
+                        value: 'unsuspend',
+                        child: Text('Reativar', style: TextStyle(color: AppColors.success)),
+                      )
+                    else
+                      const PopupMenuItem(
+                        value: 'suspend',
+                        child: Text('Suspender', style: TextStyle(color: AppColors.warning)),
+                      ),
+                    if (!isSuspended)
+                      const PopupMenuItem(
+                        value: 'remove',
+                        child: Text('Remover', style: TextStyle(color: AppColors.error)),
+                      ),
+                  ],
+                )
+              : null,
         ),
-        trailing: isAdmin
-            ? PopupMenuButton<String>(
-                onSelected: (action) {
-                  if (action == 'toggle_role') onToggleRole?.call();
-                  if (action == 'remove') onRemove?.call();
-                },
-                itemBuilder: (_) => [
-                  PopupMenuItem(
-                    value: 'toggle_role',
-                    child: Text(member.isClubAdmin ? 'Tornar membro' : 'Tornar admin'),
-                  ),
-                  const PopupMenuItem(
-                    value: 'remove',
-                    child: Text('Remover', style: TextStyle(color: AppColors.error)),
-                  ),
-                ],
-              )
-            : null,
       ),
     );
   }
@@ -549,7 +768,7 @@ class _SportsSection extends ConsumerWidget {
     final available = allSports.where((s) => !activeSportIds.contains(s.id)).toList();
 
     if (available.isEmpty) {
-      SnackbarUtils.showInfo(context, 'Todos os esportes ja estao adicionados');
+      SnackbarUtils.showInfo(context, 'Todos os esportes já estão adicionados');
       return;
     }
 
@@ -644,20 +863,20 @@ class _SportsSection extends ConsumerWidget {
                 ),
                 const SizedBox(height: 16),
                 SwitchListTile(
-                  title: const Text('Ambulancia'),
-                  subtitle: const Text('Permite ativar ambulancia com penalizacao'),
+                  title: const Text('Ambulância'),
+                  subtitle: const Text('Permite ativar ambulância com penalização'),
                   value: ambulance,
                   onChanged: (v) => setState(() => ambulance = v),
                 ),
                 SwitchListTile(
-                  title: const Text('Cooldown / Protecao'),
-                  subtitle: const Text('48h cooldown desafiante + 24h protecao desafiado'),
+                  title: const Text('Cooldown / Proteção'),
+                  subtitle: const Text('48h cooldown desafiante + 24h proteção desafiado'),
                   value: cooldown,
                   onChanged: (v) => setState(() => cooldown = v),
                 ),
                 SwitchListTile(
-                  title: const Text('Limite de posicoes'),
-                  subtitle: const Text('So pode desafiar ate 2 posicoes acima'),
+                  title: const Text('Limite de posições'),
+                  subtitle: const Text('Só pode desafiar até 2 posições acima'),
                   value: positionGap,
                   onChanged: (v) => setState(() => positionGap = v),
                 ),
@@ -817,6 +1036,9 @@ class _CourtsSection extends ConsumerWidget {
                         ref.invalidate(_clubAllCourtsProvider(clubId));
                         ref.invalidate(courtsListProvider);
                       },
+                      onManageSlots: () => context.push(
+                        '/courts/${court.id}/slots?name=${Uri.encodeComponent(court.name)}',
+                      ),
                     )),
                   ],
                 );
@@ -930,8 +1152,8 @@ class _CourtsSection extends ConsumerWidget {
                 TextField(
                   controller: notesController,
                   decoration: const InputDecoration(
-                    labelText: 'Observacoes (opcional)',
-                    hintText: 'Ex: Iluminacao disponivel',
+                    labelText: 'Observações (opcional)',
+                    hintText: 'Ex: Iluminação disponível',
                   ),
                   maxLines: 2,
                 ),
@@ -989,12 +1211,14 @@ class _CourtTile extends StatelessWidget {
   final bool isAdmin;
   final VoidCallback onEdit;
   final VoidCallback onToggleActive;
+  final VoidCallback? onManageSlots;
 
   const _CourtTile({
     required this.court,
     required this.isAdmin,
     required this.onEdit,
     required this.onToggleActive,
+    this.onManageSlots,
   });
 
   @override
@@ -1035,11 +1259,16 @@ class _CourtTile extends StatelessWidget {
                 onSelected: (action) {
                   if (action == 'edit') onEdit();
                   if (action == 'toggle') onToggleActive();
+                  if (action == 'slots') onManageSlots?.call();
                 },
                 itemBuilder: (_) => [
                   const PopupMenuItem(
                     value: 'edit',
                     child: Text('Editar'),
+                  ),
+                  const PopupMenuItem(
+                    value: 'slots',
+                    child: Text('Horários'),
                   ),
                   PopupMenuItem(
                     value: 'toggle',

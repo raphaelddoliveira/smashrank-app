@@ -100,7 +100,7 @@ class _CourtScheduleScreenState extends ConsumerState<CourtScheduleScreen> {
                 if (slots.isEmpty) {
                   return const Center(
                     child: Text(
-                      'Sem horarios disponiveis neste dia',
+                      'Sem horários disponíveis neste dia',
                       style: TextStyle(color: AppColors.onBackgroundLight),
                     ),
                   );
@@ -118,7 +118,7 @@ class _CourtScheduleScreenState extends ConsumerState<CourtScheduleScreen> {
               loading: () =>
                   const Center(child: CircularProgressIndicator()),
               error: (err, _) => Center(
-                child: Text('Erro ao carregar horarios: $err'),
+                child: Text('Erro ao carregar horários: $err'),
               ),
             ),
           ),
@@ -270,8 +270,8 @@ class _CourtScheduleScreenState extends ConsumerState<CourtScheduleScreen> {
                         isReserved
                             ? 'Reservado - ${reservation.playerName ?? 'Jogador'}'
                             : isSlotPast
-                                ? 'Horario passado'
-                                : 'Disponivel',
+                                ? 'Horário passado'
+                                : 'Disponível',
                         style:
                             TextStyle(fontSize: 12, color: statusColor),
                       ),
@@ -428,11 +428,11 @@ class _CourtScheduleScreenState extends ConsumerState<CourtScheduleScreen> {
     return switch (dow) {
       0 => 'Domingo',
       1 => 'Segunda-feira',
-      2 => 'Terca-feira',
+      2 => 'Terça-feira',
       3 => 'Quarta-feira',
       4 => 'Quinta-feira',
       5 => 'Sexta-feira',
-      6 => 'Sabado',
+      6 => 'Sábado',
       _ => '',
     };
   }

@@ -24,7 +24,7 @@ class ChallengesScreen extends ConsumerWidget {
           bottom: const TabBar(
             tabs: [
               Tab(text: 'Ativos'),
-              Tab(text: 'Historico'),
+              Tab(text: 'Histórico'),
             ],
           ),
         ),
@@ -200,7 +200,7 @@ class _ChallengeListTile extends StatelessWidget {
                     Row(
                       children: [
                         Text(
-                          isChallenger ? 'Voce desafiou' : 'Desafiado por',
+                          isChallenger ? 'Você desafiou' : 'Desafiado por',
                           style: Theme.of(context).textTheme.bodySmall?.copyWith(
                                 color: AppColors.onBackgroundMedium,
                               ),

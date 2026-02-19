@@ -158,7 +158,7 @@ void openClubSelector(BuildContext context, WidgetRef ref) {
                   child: Icon(Icons.add, size: 18, color: AppColors.onBackgroundLight),
                 ),
                 title: const Text('Criar novo clube'),
-                subtitle: const Text('Voce sera o administrador'),
+                subtitle: const Text('Você será o administrador'),
                 onTap: () {
                   Navigator.pop(ctx);
                   context.push('/clubs/create');
@@ -170,8 +170,8 @@ void openClubSelector(BuildContext context, WidgetRef ref) {
                   backgroundColor: AppColors.surfaceVariant,
                   child: Icon(Icons.vpn_key_outlined, size: 18, color: AppColors.onBackgroundLight),
                 ),
-                title: const Text('Entrar com codigo'),
-                subtitle: const Text('Digite o codigo de convite do clube'),
+                title: const Text('Entrar com código'),
+                subtitle: const Text('Digite o código de convite do clube'),
                 onTap: () {
                   Navigator.pop(ctx);
                   context.push('/clubs/join');

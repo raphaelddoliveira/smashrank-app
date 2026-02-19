@@ -6,6 +6,13 @@ enum PlayerStatus {
   ambulance,
   suspended;
 
+  String get label => switch (this) {
+        active => 'Ativo',
+        inactive => 'Inativo',
+        ambulance => 'Ambulância',
+        suspended => 'Suspenso',
+      };
+
   static PlayerStatus fromString(String value) =>
       PlayerStatus.values.firstWhere((e) => e.name == value);
 }
@@ -54,6 +61,12 @@ enum PaymentStatus {
   paid,
   overdue;
 
+  String get label => switch (this) {
+        pending => 'Pendente',
+        paid => 'Em dia',
+        overdue => 'Atrasada',
+      };
+
   static PaymentStatus fromString(String value) =>
       PaymentStatus.values.firstWhere((e) => e.name == value);
 }
@@ -78,6 +91,12 @@ enum ClubMemberStatus {
   active,
   pending,
   inactive;
+
+  String get label => switch (this) {
+        active => 'Ativo',
+        pending => 'Pendente',
+        inactive => 'Inativo',
+      };
 
   static ClubMemberStatus fromString(String value) =>
       ClubMemberStatus.values.firstWhere((e) => e.name == value);

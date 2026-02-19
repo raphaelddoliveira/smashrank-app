@@ -87,14 +87,15 @@ class ClubRepository {
     }
   }
 
-  /// Get members of a club (with player data)
+  /// Get members of a club (with player data), including suspended
   Future<List<ClubMemberModel>> getMembers(String clubId) async {
     try {
       final data = await _client
           .from('club_members')
           .select('*, player:players(full_name, nickname, avatar_url, email, phone)')
           .eq('club_id', clubId)
-          .eq('status', 'active')
+          .inFilter('status', ['active', 'inactive'])
+          .order('status', ascending: true)
           .order('ranking_position', ascending: true);
       return data.map((e) => ClubMemberModel.fromJson(e)).toList();
     } catch (e) {
@@ -180,6 +181,74 @@ class ClubRepository {
       await _client.rpc('remove_club_member', params: {
         'p_member_id': memberId,
         'p_admin_auth_id': adminAuthId,
+      });
+    } catch (e) {
+      throw ErrorHandler.handle(e);
+    }
+  }
+
+  /// Suspend a member (set status to inactive)
+  Future<void> suspendMember(String memberId) async {
+    try {
+      // Get member info for notification
+      final member = await _client
+          .from('club_members')
+          .select('player_id, club_id')
+          .eq('id', memberId)
+          .single();
+
+      await _client
+          .from('club_members')
+          .update({'status': 'inactive'})
+          .eq('id', memberId);
+
+      // Notify the member
+      final clubData = await _client
+          .from('clubs')
+          .select('name')
+          .eq('id', member['club_id'])
+          .single();
+
+      await _client.from('notifications').insert({
+        'player_id': member['player_id'],
+        'type': 'general',
+        'title': 'Conta Suspensa',
+        'body': 'Sua conta no clube ${clubData['name']} foi suspensa pelo administrador. Entre em contato para regularizar.',
+        'data': {'club_id': member['club_id']},
+        'club_id': member['club_id'],
+      });
+    } catch (e) {
+      throw ErrorHandler.handle(e);
+    }
+  }
+
+  /// Unsuspend (reactivate) a member
+  Future<void> unsuspendMember(String memberId) async {
+    try {
+      final member = await _client
+          .from('club_members')
+          .select('player_id, club_id')
+          .eq('id', memberId)
+          .single();
+
+      await _client
+          .from('club_members')
+          .update({'status': 'active'})
+          .eq('id', memberId);
+
+      final clubData = await _client
+          .from('clubs')
+          .select('name')
+          .eq('id', member['club_id'])
+          .single();
+
+      await _client.from('notifications').insert({
+        'player_id': member['player_id'],
+        'type': 'general',
+        'title': 'Conta Reativada',
+        'body': 'Sua conta no clube ${clubData['name']} foi reativada. Você já pode voltar a jogar!',
+        'data': {'club_id': member['club_id']},
+        'club_id': member['club_id'],
       });
     } catch (e) {
       throw ErrorHandler.handle(e);

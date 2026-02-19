@@ -5,7 +5,7 @@ class FacilityConfig {
   final String label;        // "Quadra", "Campo"
   final String plural;       // "Quadras", "Campos"
   final String coveredLabel; // "Quadra coberta", "Campo coberto"
-  final String emptyState;   // "Nenhuma quadra disponivel"
+  final String emptyState;   // "Nenhuma quadra disponível"
   final String emptyAdmin;   // "Nenhuma quadra cadastrada"
   final String nameLabel;    // "Nome da quadra"
   final String nameHint;     // "Ex: Quadra 1"
@@ -87,7 +87,7 @@ class SportModel {
           label: 'Quadra',
           plural: 'Quadras',
           coveredLabel: 'Quadra coberta',
-          emptyState: 'Nenhuma quadra disponivel',
+          emptyState: 'Nenhuma quadra disponível',
           emptyAdmin: 'Nenhuma quadra cadastrada',
           nameLabel: 'Nome da quadra',
           nameHint: 'Ex: Quadra 1',
@@ -98,7 +98,7 @@ class SportModel {
             (value: 'dura', label: 'Quadra Dura'),
             (value: 'grama', label: 'Grama'),
             (value: 'carpet', label: 'Carpet'),
-            (value: 'sintetica', label: 'Sintetica'),
+            (value: 'sintetica', label: 'Sintética'),
           ],
         );
       case 'futsal':
@@ -106,14 +106,14 @@ class SportModel {
           label: 'Quadra',
           plural: 'Quadras',
           coveredLabel: 'Quadra coberta',
-          emptyState: 'Nenhuma quadra disponivel',
+          emptyState: 'Nenhuma quadra disponível',
           emptyAdmin: 'Nenhuma quadra cadastrada',
           nameLabel: 'Nome da quadra',
           nameHint: 'Ex: Quadra 1',
           newTitle: 'Nova Quadra',
           editTitle: 'Editar Quadra',
           surfaces: [
-            (value: 'grama_sintetica', label: 'Grama Sintetica'),
+            (value: 'grama_sintetica', label: 'Grama Sintética'),
             (value: 'piso', label: 'Piso'),
             (value: 'cimento', label: 'Cimento'),
           ],
@@ -123,7 +123,7 @@ class SportModel {
           label: 'Campo',
           plural: 'Campos',
           coveredLabel: 'Campo coberto',
-          emptyState: 'Nenhum campo disponivel',
+          emptyState: 'Nenhum campo disponível',
           emptyAdmin: 'Nenhum campo cadastrado',
           nameLabel: 'Nome do campo',
           nameHint: 'Ex: Campo 1',
@@ -131,7 +131,7 @@ class SportModel {
           editTitle: 'Editar Campo',
           surfaces: [
             (value: 'grama_natural', label: 'Grama Natural'),
-            (value: 'grama_sintetica', label: 'Grama Sintetica'),
+            (value: 'grama_sintetica', label: 'Grama Sintética'),
             (value: 'society', label: 'Society'),
           ],
         );
@@ -143,7 +143,7 @@ class SportModel {
           label: 'Quadra',
           plural: 'Quadras',
           coveredLabel: 'Quadra coberta',
-          emptyState: 'Nenhuma quadra disponivel',
+          emptyState: 'Nenhuma quadra disponível',
           emptyAdmin: 'Nenhuma quadra cadastrada',
           nameLabel: 'Nome da quadra',
           nameHint: 'Ex: Quadra 1',
@@ -162,7 +162,7 @@ class SportModel {
           label: 'Quadra',
           plural: 'Quadras',
           coveredLabel: 'Quadra coberta',
-          emptyState: 'Nenhuma quadra disponivel',
+          emptyState: 'Nenhuma quadra disponível',
           emptyAdmin: 'Nenhuma quadra cadastrada',
           nameLabel: 'Nome da quadra',
           nameHint: 'Ex: Quadra 1',
@@ -177,7 +177,7 @@ class SportModel {
           label: 'Local',
           plural: 'Locais',
           coveredLabel: 'Local coberto',
-          emptyState: 'Nenhum local disponivel',
+          emptyState: 'Nenhum local disponível',
           emptyAdmin: 'Nenhum local cadastrado',
           nameLabel: 'Nome do local',
           nameHint: 'Ex: Local 1',
