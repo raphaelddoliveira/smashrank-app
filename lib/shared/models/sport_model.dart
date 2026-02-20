@@ -59,6 +59,11 @@ class SportModel {
   int get minDiff => config['min_diff'] as int? ?? 2;
   int get halves => config['halves'] as int? ?? 2;
 
+  bool get isTennis {
+    final n = name.toLowerCase();
+    return n == 'tenis' || n == 'tênis';
+  }
+
   IconData get iconData {
     switch (name.toLowerCase()) {
       case 'tenis':

@@ -6,13 +6,14 @@ import '../../../core/utils/snackbar_utils.dart';
 import '../../../shared/models/court_slot_model.dart';
 import '../data/court_repository.dart';
 import '../viewmodel/court_slots_admin_viewmodel.dart';
+import '../viewmodel/reservation_viewmodel.dart';
 
 class _DayConfig {
-  bool enabled;
+  bool enabled = false;
   TimeOfDay startTime;
   TimeOfDay endTime;
 
-  _DayConfig({this.enabled = true})
+  _DayConfig()
       : startTime = const TimeOfDay(hour: 7, minute: 0),
         endTime = const TimeOfDay(hour: 21, minute: 0);
 }
@@ -46,14 +47,66 @@ class _CourtSlotsScreenState extends ConsumerState<CourtSlotsScreen> {
 
   int _slotDurationMinutes = 60;
   final Map<int, _DayConfig> _dayConfigs = {};
-  bool _isGenerating = false;
+  bool _isSaving = false;
+  bool _configLoaded = false;
 
   @override
   void initState() {
     super.initState();
     for (final day in _dayOrder) {
-      _dayConfigs[day] = _DayConfig(enabled: day != 0);
+      _dayConfigs[day] = _DayConfig();
     }
+  }
+
+  /// Derive config from existing slots (called once when data loads)
+  void _loadConfigFromSlots(List<CourtSlotModel> slots) {
+    if (_configLoaded) return;
+
+    if (slots.isNotEmpty) {
+      // Detect duration from first active slot
+      final activeSlots = slots.where((s) => s.isActive).toList();
+      if (activeSlots.isNotEmpty) {
+        final firstSlot = activeSlots.first;
+        final startParts = firstSlot.startTime.split(':');
+        final endParts = firstSlot.endTime.split(':');
+        final startMin = int.parse(startParts[0]) * 60 + int.parse(startParts[1]);
+        final endMin = int.parse(endParts[0]) * 60 + int.parse(endParts[1]);
+        final detected = endMin - startMin;
+        if (detected > 0) _slotDurationMinutes = detected;
+      }
+
+      // Group active slots by day
+      final grouped = <int, List<CourtSlotModel>>{};
+      for (final slot in activeSlots) {
+        grouped.putIfAbsent(slot.dayOfWeek, () => []).add(slot);
+      }
+
+      // Configure each day from existing slots
+      for (final day in _dayOrder) {
+        final daySlots = grouped[day];
+        if (daySlots != null && daySlots.isNotEmpty) {
+          daySlots.sort((a, b) => a.startTime.compareTo(b.startTime));
+          final firstStart = daySlots.first.startTime.split(':');
+          final lastEnd = daySlots.last.endTime.split(':');
+          _dayConfigs[day]!.enabled = true;
+          _dayConfigs[day]!.startTime = TimeOfDay(
+            hour: int.parse(firstStart[0]),
+            minute: int.parse(firstStart[1]),
+          );
+          _dayConfigs[day]!.endTime = TimeOfDay(
+            hour: int.parse(lastEnd[0]),
+            minute: int.parse(lastEnd[1]),
+          );
+        }
+      }
+    } else {
+      // No slots: default Mon-Sat enabled
+      for (final day in _dayOrder) {
+        _dayConfigs[day]!.enabled = day != 0;
+      }
+    }
+
+    _configLoaded = true;
   }
 
   int _calculateSlotCount(_DayConfig config) {
@@ -68,11 +121,8 @@ class _CourtSlotsScreenState extends ConsumerState<CourtSlotsScreen> {
       .map((d) => _calculateSlotCount(_dayConfigs[d]!))
       .fold(0, (a, b) => a + b);
 
-  Future<void> _generateSlots() async {
-    setState(() => _isGenerating = true);
-
+  List<Map<String, dynamic>> _buildNewSlots() {
     final slots = <Map<String, dynamic>>[];
-
     for (final day in _dayOrder) {
       final config = _dayConfigs[day]!;
       if (!config.enabled) continue;
@@ -97,19 +147,34 @@ class _CourtSlotsScreenState extends ConsumerState<CourtSlotsScreen> {
         minutes += _slotDurationMinutes;
       }
     }
+    return slots;
+  }
+
+  Future<void> _saveConfiguration() async {
+    setState(() => _isSaving = true);
 
     try {
-      await ref.read(courtRepositoryProvider).bulkCreateSlots(slots);
+      final slots = _buildNewSlots();
+      await ref.read(courtRepositoryProvider).saveSlotConfiguration(
+        widget.courtId,
+        slots,
+      );
       ref.invalidate(allCourtSlotsProvider(widget.courtId));
+      // Invalidate schedule providers so they refetch fresh data
+      for (int day = 0; day < 7; day++) {
+        ref.invalidate(courtSlotsProvider(
+          (courtId: widget.courtId, dayOfWeek: day),
+        ));
+      }
       if (mounted) {
-        SnackbarUtils.showSuccess(context, '${slots.length} horários gerados!');
+        SnackbarUtils.showSuccess(context, 'Configuração salva! $_totalSlots horários.');
       }
     } catch (e) {
       if (mounted) {
-        SnackbarUtils.showError(context, 'Erro ao gerar horários: $e');
+        SnackbarUtils.showError(context, 'Erro ao salvar: $e');
       }
     } finally {
-      if (mounted) setState(() => _isGenerating = false);
+      if (mounted) setState(() => _isSaving = false);
     }
   }
 
@@ -117,44 +182,88 @@ class _CourtSlotsScreenState extends ConsumerState<CourtSlotsScreen> {
   Widget build(BuildContext context) {
     final slotsAsync = ref.watch(allCourtSlotsProvider(widget.courtId));
 
+    // Load config from existing slots once
+    slotsAsync.whenData((slots) {
+      if (!_configLoaded) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted) setState(() => _loadConfigFromSlots(slots));
+        });
+      }
+    });
+
     return Scaffold(
       appBar: AppBar(
         title: Text('${widget.courtName} - Horários'),
       ),
-      body: ListView(
-        padding: const EdgeInsets.all(16),
-        children: [
-          // Duration selector
-          _buildDurationSelector(),
-          const SizedBox(height: 12),
+      bottomNavigationBar: _buildSaveBar(),
+      body: slotsAsync.when(
+        data: (_) => _configLoaded
+            ? ListView(
+                padding: const EdgeInsets.all(16),
+                children: [
+                  _buildDurationSelector(),
+                  const SizedBox(height: 12),
+                  ..._dayOrder.map(_buildDayRow),
+                ],
+              )
+            : const Center(child: CircularProgressIndicator()),
+        loading: () => const Center(child: CircularProgressIndicator()),
+        error: (e, _) => Center(child: Text('Erro: $e')),
+      ),
+    );
+  }
 
-          // Per-day configs
-          ..._dayOrder.map(_buildDayRow),
-          const SizedBox(height: 16),
-
-          // Generate button
-          _buildGenerateButton(),
-          const SizedBox(height: 24),
-          const Divider(),
-          const SizedBox(height: 12),
-
-          // Existing slots
-          Text(
-            'Horários cadastrados',
-            style: Theme.of(context).textTheme.titleMedium?.copyWith(
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-          const SizedBox(height: 8),
-          slotsAsync.when(
-            data: (slots) => _buildSlotsList(slots),
-            loading: () => const Padding(
-              padding: EdgeInsets.symmetric(vertical: 24),
-              child: Center(child: CircularProgressIndicator()),
-            ),
-            error: (e, _) => Center(child: Text('Erro: $e')),
+  Widget _buildSaveBar() {
+    final total = _totalSlots;
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surface,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withAlpha(15),
+            blurRadius: 8,
+            offset: const Offset(0, -2),
           ),
         ],
+      ),
+      child: SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.access_time, size: 16, color: AppColors.onBackgroundMedium),
+                const SizedBox(width: 6),
+                Text(
+                  '$total horários no total',
+                  style: TextStyle(
+                    fontSize: 13,
+                    color: AppColors.onBackgroundMedium,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 10),
+            SizedBox(
+              width: double.infinity,
+              height: 48,
+              child: FilledButton.icon(
+                onPressed: !_isSaving ? _saveConfiguration : null,
+                icon: _isSaving
+                    ? const SizedBox(
+                        width: 18,
+                        height: 18,
+                        child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                      )
+                    : const Icon(Icons.save),
+                label: Text(_isSaving ? 'Salvando...' : 'Salvar Configuração'),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -254,7 +363,6 @@ class _CourtSlotsScreenState extends ConsumerState<CourtSlotsScreen> {
                 children: [
                   const SizedBox(width: 48),
                   _buildTimePicker(
-                    label: 'Início',
                     time: config.startTime,
                     onChanged: (t) => setState(() => config.startTime = t),
                   ),
@@ -263,7 +371,6 @@ class _CourtSlotsScreenState extends ConsumerState<CourtSlotsScreen> {
                     child: Text('até', style: TextStyle(color: AppColors.onBackgroundLight)),
                   ),
                   _buildTimePicker(
-                    label: 'Fim',
                     time: config.endTime,
                     onChanged: (t) => setState(() => config.endTime = t),
                   ),
@@ -278,7 +385,6 @@ class _CourtSlotsScreenState extends ConsumerState<CourtSlotsScreen> {
   }
 
   Widget _buildTimePicker({
-    required String label,
     required TimeOfDay time,
     required ValueChanged<TimeOfDay> onChanged,
   }) {
@@ -305,229 +411,6 @@ class _CourtSlotsScreenState extends ConsumerState<CourtSlotsScreen> {
     );
   }
 
-  Widget _buildGenerateButton() {
-    final total = _totalSlots;
-
-    return SizedBox(
-      width: double.infinity,
-      height: 48,
-      child: FilledButton.icon(
-        onPressed: total > 0 && !_isGenerating ? _generateSlots : null,
-        icon: _isGenerating
-            ? const SizedBox(
-                width: 18,
-                height: 18,
-                child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
-              )
-            : const Icon(Icons.auto_awesome),
-        label: Text(_isGenerating ? 'Gerando...' : 'Gerar $total Horários'),
-      ),
-    );
-  }
-
-  Widget _buildSlotsList(List<CourtSlotModel> slots) {
-    if (slots.isEmpty) {
-      return const Padding(
-        padding: EdgeInsets.symmetric(vertical: 24),
-        child: Center(
-          child: Text(
-            'Nenhum horário cadastrado ainda',
-            style: TextStyle(color: AppColors.onBackgroundLight),
-          ),
-        ),
-      );
-    }
-
-    final grouped = <int, List<CourtSlotModel>>{};
-    for (final slot in slots) {
-      grouped.putIfAbsent(slot.dayOfWeek, () => []).add(slot);
-    }
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: _dayOrder.map((day) {
-        final daySlots = grouped[day];
-        if (daySlots == null || daySlots.isEmpty) return const SizedBox.shrink();
-        final activeCount = daySlots.where((s) => s.isActive).length;
-
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Padding(
-              padding: const EdgeInsets.only(top: 12, bottom: 6, left: 4),
-              child: Row(
-                children: [
-                  const Icon(Icons.calendar_today, size: 16, color: AppColors.onBackgroundMedium),
-                  const SizedBox(width: 8),
-                  Text(
-                    _dayLabels[day] ?? '',
-                    style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Text(
-                    '$activeCount/${daySlots.length} ativos',
-                    style: const TextStyle(
-                      fontSize: 12,
-                      color: AppColors.onBackgroundLight,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            ...daySlots.map((slot) => _SlotTile(
-              slot: slot,
-              onToggleActive: () async {
-                try {
-                  await ref.read(courtRepositoryProvider).toggleSlotActive(
-                    slot.id, !slot.isActive,
-                  );
-                  ref.invalidate(allCourtSlotsProvider(widget.courtId));
-                } catch (e) {
-                  if (mounted) {
-                    SnackbarUtils.showError(context, 'Erro: $e');
-                  }
-                }
-              },
-              onDelete: () => _confirmDelete(slot),
-            )),
-          ],
-        );
-      }).toList(),
-    );
-  }
-
-  void _confirmDelete(CourtSlotModel slot) async {
-    try {
-      final hasReservations = await ref.read(courtRepositoryProvider).slotHasReservations(slot.id);
-      if (hasReservations) {
-        if (mounted) {
-          SnackbarUtils.showError(
-            context,
-            'Este horário possui reservas. Desative-o em vez de excluir.',
-          );
-        }
-        return;
-      }
-    } catch (e) {
-      if (mounted) {
-        SnackbarUtils.showError(context, 'Erro: $e');
-      }
-      return;
-    }
-
-    if (!mounted) return;
-
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Excluir horário?'),
-        content: Text('${slot.dayLabel} ${slot.timeRange}\n\nEsta ação não pode ser desfeita.'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Cancelar'),
-          ),
-          FilledButton(
-            style: FilledButton.styleFrom(backgroundColor: AppColors.error),
-            onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Excluir'),
-          ),
-        ],
-      ),
-    );
-
-    if (confirmed == true) {
-      try {
-        await ref.read(courtRepositoryProvider).deleteSlot(slot.id);
-        ref.invalidate(allCourtSlotsProvider(widget.courtId));
-        if (mounted) {
-          SnackbarUtils.showSuccess(context, 'Horário excluído');
-        }
-      } catch (e) {
-        if (mounted) {
-          SnackbarUtils.showError(context, 'Erro ao excluir: $e');
-        }
-      }
-    }
-  }
-
   static String _formatTimeOfDay(TimeOfDay t) =>
       '${t.hour.toString().padLeft(2, '0')}:${t.minute.toString().padLeft(2, '0')}';
-}
-
-class _SlotTile extends StatelessWidget {
-  final CourtSlotModel slot;
-  final VoidCallback onToggleActive;
-  final VoidCallback onDelete;
-
-  const _SlotTile({
-    required this.slot,
-    required this.onToggleActive,
-    required this.onDelete,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Card(
-      margin: const EdgeInsets.only(bottom: 4),
-      child: ListTile(
-        dense: true,
-        leading: Container(
-          width: 48,
-          height: 36,
-          decoration: BoxDecoration(
-            color: slot.isActive
-                ? AppColors.primary.withAlpha(20)
-                : AppColors.surfaceVariant,
-            borderRadius: BorderRadius.circular(8),
-          ),
-          alignment: Alignment.center,
-          child: Text(
-            slot.startTime.substring(0, 5),
-            style: TextStyle(
-              fontWeight: FontWeight.w700,
-              fontSize: 13,
-              color: slot.isActive ? AppColors.primary : AppColors.onBackgroundLight,
-            ),
-          ),
-        ),
-        title: Text(
-          slot.timeRange,
-          style: TextStyle(
-            fontWeight: FontWeight.w500,
-            color: slot.isActive ? null : AppColors.onBackgroundLight,
-          ),
-        ),
-        subtitle: slot.isActive
-            ? null
-            : const Text(
-                'Inativo',
-                style: TextStyle(fontSize: 11, color: AppColors.error),
-              ),
-        trailing: PopupMenuButton<String>(
-          onSelected: (action) {
-            if (action == 'toggle') onToggleActive();
-            if (action == 'delete') onDelete();
-          },
-          itemBuilder: (_) => [
-            PopupMenuItem(
-              value: 'toggle',
-              child: Text(
-                slot.isActive ? 'Desativar' : 'Reativar',
-                style: TextStyle(
-                  color: slot.isActive ? AppColors.error : AppColors.success,
-                ),
-              ),
-            ),
-            const PopupMenuItem(
-              value: 'delete',
-              child: Text('Excluir', style: TextStyle(color: AppColors.error)),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
 }

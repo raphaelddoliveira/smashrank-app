@@ -43,6 +43,7 @@ class ChallengeRepository {
   }
 
   /// Get only active challenges for current player in a club + sport
+  /// Auto-expires challenges where all proposed dates have passed.
   Future<List<ChallengeModel>> getActiveChallenges({required String clubId, String? sportId}) async {
     try {
       final playerId = await _getCurrentPlayerId();
@@ -56,9 +57,61 @@ class ChallengeRepository {
         query = query.eq('sport_id', sportId);
       }
       final data = await query.order('created_at', ascending: false);
-      return data.map((e) => ChallengeModel.fromJson(e)).toList();
+      final challenges = data.map((e) => ChallengeModel.fromJson(e)).toList();
+
+      // Auto-expire challenges where all proposed dates are in the past
+      final active = <ChallengeModel>[];
+      for (final c in challenges) {
+        if (c.allProposedDatesExpired) {
+          // Fire-and-forget: expire in DB
+          _expireDatesProposedChallenge(c.id, c.challengerId, c.challengedId, clubId);
+        } else {
+          active.add(c);
+        }
+      }
+      return active;
     } catch (e) {
       throw ErrorHandler.handle(e);
+    }
+  }
+
+  /// Expire a challenge where all proposed dates have passed (no ranking change)
+  Future<void> _expireDatesProposedChallenge(
+    String challengeId,
+    String challengerId,
+    String challengedId,
+    String clubId,
+  ) async {
+    try {
+      await _client
+          .from(SupabaseConstants.challengesTable)
+          .update({
+            'status': 'expired',
+            'completed_at': DateTime.now().toIso8601String(),
+          })
+          .eq('id', challengeId);
+
+      // Notify both players
+      await _client.from(SupabaseConstants.notificationsTable).insert([
+        {
+          'player_id': challengerId,
+          'type': 'general',
+          'title': 'Desafio Expirado',
+          'body': 'Todas as datas propostas já passaram. O desafio foi encerrado sem alteração no ranking.',
+          'data': {'challenge_id': challengeId},
+          'club_id': clubId,
+        },
+        {
+          'player_id': challengedId,
+          'type': 'general',
+          'title': 'Desafio Expirado',
+          'body': 'Todas as datas propostas já passaram. O desafio foi encerrado sem alteração no ranking.',
+          'data': {'challenge_id': challengeId},
+          'club_id': clubId,
+        },
+      ]);
+    } catch (_) {
+      // Silent fail for background expiration
     }
   }
 

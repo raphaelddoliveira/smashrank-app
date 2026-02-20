@@ -52,3 +52,4 @@ app.*.map.json
 
 # Windows artifacts
 nul
+.vercel

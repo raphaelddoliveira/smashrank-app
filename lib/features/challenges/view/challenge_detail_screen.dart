@@ -317,7 +317,28 @@ class _ChallengeDetailBody extends ConsumerWidget {
         break;
 
       case ChallengeStatus.datesProposed:
-        if (isChallenger) {
+        if (challenge.allProposedDatesExpired) {
+          actions.add(
+            Card(
+              color: AppColors.error.withAlpha(20),
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Row(
+                  children: [
+                    const Icon(Icons.timer_off, color: AppColors.error),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        'Todas as datas propostas já passaram. Este desafio será expirado automaticamente.',
+                        style: TextStyle(color: AppColors.error, fontSize: 13),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          );
+        } else if (isChallenger) {
           actions.add(
             ElevatedButton.icon(
               onPressed: () {

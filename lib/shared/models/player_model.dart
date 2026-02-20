@@ -14,6 +14,11 @@ class PlayerModel {
   final PaymentStatus feeStatus;
   final DateTime? feeDueDate;
   final DateTime? feeOverdueSince;
+  final String? bio;
+  final DominantHand? dominantHand;
+  final String? favoriteSportId;
+  final BackhandType? backhandType;
+  final String? preferredSurface;
   final DateTime createdAt;
   final DateTime updatedAt;
 
@@ -31,6 +36,11 @@ class PlayerModel {
     this.feeStatus = PaymentStatus.pending,
     this.feeDueDate,
     this.feeOverdueSince,
+    this.bio,
+    this.dominantHand,
+    this.favoriteSportId,
+    this.backhandType,
+    this.preferredSurface,
     required this.createdAt,
     required this.updatedAt,
   });
@@ -54,6 +64,11 @@ class PlayerModel {
     PaymentStatus? feeStatus,
     DateTime? feeDueDate,
     DateTime? feeOverdueSince,
+    String? bio,
+    DominantHand? dominantHand,
+    String? favoriteSportId,
+    BackhandType? backhandType,
+    String? preferredSurface,
     DateTime? createdAt,
     DateTime? updatedAt,
   }) {
@@ -71,6 +86,11 @@ class PlayerModel {
       feeStatus: feeStatus ?? this.feeStatus,
       feeDueDate: feeDueDate ?? this.feeDueDate,
       feeOverdueSince: feeOverdueSince ?? this.feeOverdueSince,
+      bio: bio ?? this.bio,
+      dominantHand: dominantHand ?? this.dominantHand,
+      favoriteSportId: favoriteSportId ?? this.favoriteSportId,
+      backhandType: backhandType ?? this.backhandType,
+      preferredSurface: preferredSurface ?? this.preferredSurface,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
     );
@@ -98,6 +118,15 @@ class PlayerModel {
       feeOverdueSince: json['fee_overdue_since'] != null
           ? DateTime.parse(json['fee_overdue_since'] as String)
           : null,
+      bio: json['bio'] as String?,
+      dominantHand: json['dominant_hand'] != null
+          ? DominantHand.fromString(json['dominant_hand'] as String)
+          : null,
+      favoriteSportId: json['favorite_sport_id'] as String?,
+      backhandType: json['backhand_type'] != null
+          ? BackhandType.fromString(json['backhand_type'] as String)
+          : null,
+      preferredSurface: json['preferred_surface'] as String?,
       createdAt: DateTime.parse(json['created_at'] as String),
       updatedAt: DateTime.parse(json['updated_at'] as String),
     );
@@ -118,6 +147,11 @@ class PlayerModel {
       'fee_status': feeStatus.name,
       'fee_due_date': feeDueDate?.toIso8601String().split('T').first,
       'fee_overdue_since': feeOverdueSince?.toIso8601String().split('T').first,
+      'bio': bio,
+      'dominant_hand': dominantHand?.name,
+      'favorite_sport_id': favoriteSportId,
+      'backhand_type': backhandType?.dbValue,
+      'preferred_surface': preferredSurface,
     };
   }
 
@@ -129,6 +163,11 @@ class PlayerModel {
       'phone': phone,
       'avatar_url': avatarUrl,
       'date_of_birth': dateOfBirth?.toIso8601String().split('T').first,
+      'bio': bio,
+      'dominant_hand': dominantHand?.name,
+      'favorite_sport_id': favoriteSportId,
+      'backhand_type': backhandType?.dbValue,
+      'preferred_surface': preferredSurface,
     };
   }
 }

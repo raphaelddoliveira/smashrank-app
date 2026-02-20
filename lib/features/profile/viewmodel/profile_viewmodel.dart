@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 
 import '../../../core/errors/app_exception.dart';
+import '../../../shared/models/enums.dart';
 import '../../../shared/models/player_model.dart';
 import '../../../shared/providers/current_player_provider.dart';
 import '../data/player_repository.dart';
@@ -24,6 +25,11 @@ class ProfileViewModel extends StateNotifier<AsyncValue<PlayerModel?>> {
     String? nickname,
     String? phone,
     DateTime? dateOfBirth,
+    String? bio,
+    DominantHand? dominantHand,
+    String? favoriteSportId,
+    BackhandType? backhandType,
+    String? preferredSurface,
   }) async {
     final current = state.valueOrNull;
     if (current == null) return;
@@ -37,6 +43,11 @@ class ProfileViewModel extends StateNotifier<AsyncValue<PlayerModel?>> {
           nickname: nickname,
           phone: phone,
           dateOfBirth: dateOfBirth,
+          bio: bio,
+          dominantHand: dominantHand,
+          favoriteSportId: favoriteSportId,
+          backhandType: backhandType,
+          preferredSurface: preferredSurface,
         ),
       );
       state = AsyncData(updated);
@@ -46,14 +57,10 @@ class ProfileViewModel extends StateNotifier<AsyncValue<PlayerModel?>> {
   }
 
   Future<void> updateAvatar(String playerId, XFile file) async {
-    try {
-      final url = await _repository.updateAvatar(playerId, file);
-      final current = state.valueOrNull;
-      if (current != null) {
-        state = AsyncData(current.copyWith(avatarUrl: url));
-      }
-    } on AppException catch (e, st) {
-      state = AsyncError(e, st);
+    final url = await _repository.updateAvatar(playerId, file);
+    final current = state.valueOrNull;
+    if (current != null) {
+      state = AsyncData(current.copyWith(avatarUrl: url));
     }
   }
 }

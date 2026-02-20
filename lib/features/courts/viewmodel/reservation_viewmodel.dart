@@ -6,7 +6,7 @@ import '../../../shared/models/reservation_model.dart';
 import '../data/court_repository.dart';
 
 /// Provider for slots of a court on a specific day of week
-final courtSlotsProvider = FutureProvider.family<List<CourtSlotModel>,
+final courtSlotsProvider = FutureProvider.autoDispose.family<List<CourtSlotModel>,
     ({String courtId, int dayOfWeek})>((ref, params) async {
   final repository = ref.watch(courtRepositoryProvider);
   return repository.getSlotsForCourt(

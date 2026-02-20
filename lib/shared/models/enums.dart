@@ -147,3 +147,34 @@ enum NotificationType {
         (e) => e.dbValue == value || e.name == value,
       );
 }
+
+enum DominantHand {
+  right,
+  left;
+
+  String get label => switch (this) {
+        right => 'Destro',
+        left => 'Canhoto',
+      };
+
+  static DominantHand fromString(String value) =>
+      DominantHand.values.firstWhere((e) => e.name == value);
+}
+
+enum BackhandType {
+  oneHanded('one_handed'),
+  twoHanded('two_handed');
+
+  final String dbValue;
+  const BackhandType(this.dbValue);
+
+  String get label => switch (this) {
+        oneHanded => 'Uma mão',
+        twoHanded => 'Duas mãos',
+      };
+
+  static BackhandType fromString(String value) =>
+      BackhandType.values.firstWhere(
+        (e) => e.dbValue == value || e.name == value,
+      );
+}

@@ -97,6 +97,15 @@ class ChallengeModel {
         ?proposedDate3,
       ];
 
+  /// True when status is dates_proposed but ALL proposed dates are in the past
+  bool get allProposedDatesExpired {
+    if (status != ChallengeStatus.datesProposed) return false;
+    final dates = proposedDates;
+    if (dates.isEmpty) return false;
+    final now = DateTime.now();
+    return dates.every((d) => d.isBefore(now));
+  }
+
   factory ChallengeModel.fromJson(Map<String, dynamic> json) {
     // Handle nested joins: challenger:players!challenger_id(full_name, avatar_url)
     final challenger = json['challenger'] as Map<String, dynamic>?;

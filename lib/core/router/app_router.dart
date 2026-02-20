@@ -24,6 +24,7 @@ import '../../features/courts/view/court_schedule_screen.dart';
 import '../../features/courts/view/court_slots_screen.dart';
 import '../../features/courts/view/my_reservations_screen.dart';
 import '../../features/notifications/view/notifications_screen.dart';
+import '../../features/profile/view/edit_profile_screen.dart';
 import '../../features/profile/view/profile_screen.dart';
 import '../../features/admin/view/admin_dashboard_screen.dart';
 import '../../shared/widgets/app_scaffold.dart';
@@ -174,6 +175,12 @@ final appRouterProvider = Provider<GoRouter>((ref) {
             ),
           ),
         ],
+      ),
+
+      // Profile edit (no bottom nav)
+      GoRoute(
+        path: RouteNames.editProfile,
+        builder: (context, state) => const EditProfileScreen(),
       ),
 
       // Club routes (no bottom nav)

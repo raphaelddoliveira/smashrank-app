@@ -10,6 +10,7 @@ abstract final class RouteNames {
   static const String courts = '/courts';
   static const String notifications = '/notifications';
   static const String profile = '/profile';
+  static const String editProfile = '/profile/edit';
 
   // Ranking
   static const String rankingHistory = '/ranking/history/:playerId';

@@ -73,6 +73,16 @@ class ProfileHeader extends StatelessWidget {
                 color: AppColors.onBackgroundLight,
               ),
         ),
+        if (player.bio != null && player.bio!.isNotEmpty) ...[
+          const SizedBox(height: 8),
+          Text(
+            player.bio!,
+            textAlign: TextAlign.center,
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  color: AppColors.onBackgroundMedium,
+                ),
+          ),
+        ],
       ],
     );
   }

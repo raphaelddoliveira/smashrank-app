@@ -188,6 +188,73 @@ class CourtRepository {
     }
   }
 
+  /// Normalize TIME values to HH:MM (strip seconds if present).
+  static String _normalizeTime(String time) {
+    final parts = time.split(':');
+    return '${parts[0]}:${parts[1]}';
+  }
+
+  /// Save slot configuration: upsert new slots and remove old ones that don't match.
+  /// Returns the number of removed slots (excluding those with reservations).
+  Future<int> saveSlotConfiguration(String courtId, List<Map<String, dynamic>> newSlots) async {
+    try {
+      // 1. Upsert new slots
+      if (newSlots.isNotEmpty) {
+        await _client
+            .from(SupabaseConstants.courtSlotsTable)
+            .upsert(newSlots, onConflict: 'court_id,day_of_week,start_time');
+      }
+
+      // 2. Build set of (day_of_week, start_time) keys for new config
+      // Normalize times to HH:MM to match DB format
+      final newKeys = <String>{};
+      for (final s in newSlots) {
+        final t = _normalizeTime(s['start_time'] as String);
+        newKeys.add('${s['day_of_week']}_$t');
+      }
+
+      // 3. Get all existing slots for court
+      final existing = await _client
+          .from(SupabaseConstants.courtSlotsTable)
+          .select('id, day_of_week, start_time')
+          .eq('court_id', courtId);
+
+      // 4. Find slots to remove (not in new config)
+      // DB returns TIME as "HH:MM:SS", normalize to "HH:MM" for comparison
+      final toRemoveIds = <String>[];
+      for (final slot in existing) {
+        final t = _normalizeTime(slot['start_time'] as String);
+        final key = '${slot['day_of_week']}_$t';
+        if (!newKeys.contains(key)) {
+          toRemoveIds.add(slot['id'] as String);
+        }
+      }
+
+      // 5. For each slot to remove, check if it has reservations
+      int removed = 0;
+      for (final id in toRemoveIds) {
+        final hasRes = await slotHasReservations(id);
+        if (!hasRes) {
+          await _client
+              .from(SupabaseConstants.courtSlotsTable)
+              .delete()
+              .eq('id', id);
+          removed++;
+        } else {
+          // Deactivate instead of deleting
+          await _client
+              .from(SupabaseConstants.courtSlotsTable)
+              .update({'is_active': false})
+              .eq('id', id);
+        }
+      }
+
+      return removed;
+    } catch (e) {
+      throw ErrorHandler.handle(e);
+    }
+  }
+
   /// Toggle slot active status
   Future<void> toggleSlotActive(String slotId, bool isActive) async {
     try {

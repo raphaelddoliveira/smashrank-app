@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../core/constants/route_names.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../features/auth/data/auth_repository.dart';
 import '../../../shared/providers/current_player_provider.dart';
@@ -24,6 +25,11 @@ class ProfileScreen extends ConsumerWidget {
         title: clubAppBarTitle('Meu Perfil', context, ref),
         centerTitle: true,
         actions: [
+          IconButton(
+            icon: const Icon(Icons.edit_outlined),
+            tooltip: 'Editar perfil',
+            onPressed: () => context.push(RouteNames.editProfile),
+          ),
           IconButton(
             icon: const Icon(Icons.logout),
             onPressed: () async {
