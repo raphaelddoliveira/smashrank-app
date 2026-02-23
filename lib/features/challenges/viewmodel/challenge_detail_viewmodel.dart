@@ -106,6 +106,26 @@ class ChallengeActionNotifier extends StateNotifier<AsyncValue<void>> {
     }
   }
 
+  Future<bool> recordWo({
+    required String challengeId,
+    required String winnerId,
+    required String loserId,
+  }) async {
+    state = const AsyncLoading();
+    try {
+      await _repository.recordWo(
+        challengeId: challengeId,
+        winnerId: winnerId,
+        loserId: loserId,
+      );
+      state = const AsyncData(null);
+      return true;
+    } on AppException catch (e, st) {
+      state = AsyncError(e, st);
+      return false;
+    }
+  }
+
   Future<bool> requestWeatherExtension(String challengeId) async {
     state = const AsyncLoading();
     try {

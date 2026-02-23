@@ -28,7 +28,7 @@ class MatchModel {
   });
 
   String get scoreDisplay {
-    return sets.map((s) => '${s.winnerGames}-${s.loserGames}').join(' ');
+    return sets.map((s) => s.display).join(' ');
   }
 
   factory MatchModel.fromJson(Map<String, dynamic> json) {

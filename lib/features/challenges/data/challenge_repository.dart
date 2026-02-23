@@ -340,6 +340,26 @@ class ChallengeRepository {
     }
   }
 
+  /// Record WO (walkover) via RPC
+  Future<void> recordWo({
+    required String challengeId,
+    required String winnerId,
+    required String loserId,
+  }) async {
+    try {
+      await _client.rpc(
+        'record_wo',
+        params: {
+          'p_challenge_id': challengeId,
+          'p_winner_id': winnerId,
+          'p_loser_id': loserId,
+        },
+      );
+    } catch (e) {
+      throw ErrorHandler.handle(e);
+    }
+  }
+
   /// Cancel a challenge
   Future<void> cancelChallenge(String challengeId) async {
     try {

@@ -280,6 +280,12 @@ class _ChallengeDetailBody extends ConsumerWidget {
           matchAsync.when(
             data: (match) {
               if (match == null) return const SizedBox.shrink();
+              final isWinner = match.winnerId == currentPlayerId;
+              final isParticipant = match.winnerId == currentPlayerId ||
+                  match.loserId == currentPlayerId;
+              final winnerName = match.winnerId == challenge.challengerId
+                  ? challenge.challengerName
+                  : challenge.challengedName;
               return Card(
                 child: Padding(
                   padding: const EdgeInsets.all(16),
@@ -293,7 +299,65 @@ class _ChallengeDetailBody extends ConsumerWidget {
                                   fontWeight: FontWeight.bold,
                                 ),
                       ),
-                      const SizedBox(height: 8),
+                      const SizedBox(height: 12),
+                      // Winner/loser highlight
+                      if (isParticipant)
+                        Center(
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 16, vertical: 8),
+                            decoration: BoxDecoration(
+                              color: isWinner
+                                  ? AppColors.success.withAlpha(20)
+                                  : AppColors.error.withAlpha(20),
+                              borderRadius: BorderRadius.circular(20),
+                              border: Border.all(
+                                color: isWinner
+                                    ? AppColors.success.withAlpha(80)
+                                    : AppColors.error.withAlpha(80),
+                              ),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  isWinner
+                                      ? Icons.emoji_events
+                                      : Icons.sentiment_dissatisfied,
+                                  size: 20,
+                                  color: isWinner
+                                      ? AppColors.secondary
+                                      : AppColors.error,
+                                ),
+                                const SizedBox(width: 8),
+                                Text(
+                                  isWinner
+                                      ? 'Você venceu!'
+                                      : 'Você perdeu',
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.w700,
+                                    fontSize: 15,
+                                    color: isWinner
+                                        ? AppColors.success
+                                        : AppColors.error,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        )
+                      else if (winnerName != null)
+                        Center(
+                          child: Text(
+                            '$winnerName venceu',
+                            style: const TextStyle(
+                              fontWeight: FontWeight.w600,
+                              fontSize: 14,
+                              color: AppColors.onBackgroundMedium,
+                            ),
+                          ),
+                        ),
+                      const SizedBox(height: 12),
                       Center(
                         child: Text(
                           match.scoreDisplay,
