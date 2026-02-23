@@ -231,7 +231,7 @@ class _ReservationCard extends ConsumerWidget {
                               color: AppColors.secondary,
                               icon: Icons.emoji_events,
                             ),
-                          if (isOpponent && !isMine)
+                          if (isOpponent && !isMine && reservation.isFriendly)
                             _Badge(
                               label: 'Convidado',
                               color: AppColors.info,
