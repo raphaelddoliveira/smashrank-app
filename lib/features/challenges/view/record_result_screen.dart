@@ -280,7 +280,9 @@ class _RecordResultScreenState extends ConsumerState<RecordResultScreen> {
     );
   }
 
-  // ─── WO Card ───
+  // ─── WO Section ───
+
+  bool _woExpanded = false;
 
   Widget _buildWoCard(BuildContext context) {
     final woWinnerId = _woLoserId != null
@@ -293,126 +295,143 @@ class _RecordResultScreenState extends ConsumerState<RecordResultScreen> {
         : woWinnerId == widget.challengedId
             ? widget.challengedName
             : null;
-    final woLoserName = _woLoserId == widget.challengerId
-        ? widget.challengerName
-        : _woLoserId == widget.challengedId
-            ? widget.challengedName
-            : null;
 
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+    // Collapsed: just a small text link
+    if (!_woExpanded && _woLoserId == null) {
+      return Align(
+        alignment: Alignment.centerLeft,
+        child: TextButton.icon(
+          onPressed: () => setState(() => _woExpanded = true),
+          icon: const Icon(Icons.person_off, size: 16),
+          label: const Text('Marcar WO'),
+          style: TextButton.styleFrom(
+            foregroundColor: AppColors.onBackgroundMedium,
+            textStyle: const TextStyle(fontSize: 13),
+            padding: const EdgeInsets.symmetric(horizontal: 8),
+            visualDensity: VisualDensity.compact,
+          ),
+        ),
+      );
+    }
+
+    // Expanded: compact selection
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
           children: [
-            Row(
-              children: [
-                const Icon(Icons.person_off, size: 20, color: AppColors.warning),
-                const SizedBox(width: 8),
-                Text(
-                  'WO (Walkover)',
-                  style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
-                ),
-                const Spacer(),
-                if (_woLoserId != null)
-                  TextButton(
-                    onPressed: () => setState(() => _woLoserId = null),
-                    child: const Text('Cancelar'),
-                  ),
-              ],
-            ),
-            const SizedBox(height: 8),
             Text(
-              'Marque WO se um jogador não compareceu',
-              style: TextStyle(fontSize: 13, color: AppColors.onBackgroundLight),
-            ),
-            const SizedBox(height: 12),
-            Row(
-              children: [
-                Expanded(
-                  child: _WoButton(
-                    label: _firstName(widget.challengerName),
-                    sublabel: 'não compareceu',
-                    isSelected: _woLoserId == widget.challengerId,
-                    onTap: () => setState(() {
-                      _woLoserId = _woLoserId == widget.challengerId
-                          ? null
-                          : widget.challengerId;
-                    }),
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: _WoButton(
-                    label: _firstName(widget.challengedName),
-                    sublabel: 'não compareceu',
-                    isSelected: _woLoserId == widget.challengedId,
-                    onTap: () => setState(() {
-                      _woLoserId = _woLoserId == widget.challengedId
-                          ? null
-                          : widget.challengedId;
-                    }),
-                  ),
-                ),
-              ],
-            ),
-            if (_woLoserId != null) ...[
-              const SizedBox(height: 16),
-              Card(
-                color: AppColors.warning.withAlpha(20),
-                child: Padding(
-                  padding: const EdgeInsets.all(12),
-                  child: Row(
-                    children: [
-                      const Icon(Icons.emoji_events,
-                          color: AppColors.secondary, size: 24),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              '$woWinnerName vence por WO',
-                              style: const TextStyle(
-                                  fontWeight: FontWeight.w600, fontSize: 14),
-                            ),
-                            Text(
-                              '$woLoserName não compareceu',
-                              style: TextStyle(
-                                  fontSize: 12,
-                                  color: AppColors.onBackgroundMedium),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
+              'Quem não compareceu?',
+              style: TextStyle(
+                fontSize: 13,
+                color: AppColors.onBackgroundMedium,
               ),
-              const SizedBox(height: 12),
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton.icon(
-                  onPressed: _isSubmitting ? null : _submitWo,
-                  icon: _isSubmitting
-                      ? const SizedBox(
-                          width: 20,
-                          height: 20,
-                          child: CircularProgressIndicator(
-                              strokeWidth: 2, color: Colors.white),
-                        )
-                      : const Icon(Icons.check_circle),
-                  label: Text(_isSubmitting ? 'Registrando...' : 'Registrar WO'),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.warning,
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                  ),
-                ),
+            ),
+            const Spacer(),
+            if (_woLoserId == null)
+              GestureDetector(
+                onTap: () => setState(() => _woExpanded = false),
+                child: Icon(Icons.close, size: 18, color: AppColors.onBackgroundLight),
+              ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        Row(
+          children: [
+            Expanded(
+              child: _buildWoChip(
+                _firstName(widget.challengerName),
+                isSelected: _woLoserId == widget.challengerId,
+                onTap: () => setState(() {
+                  _woLoserId = _woLoserId == widget.challengerId
+                      ? null
+                      : widget.challengerId;
+                }),
+              ),
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: _buildWoChip(
+                _firstName(widget.challengedName),
+                isSelected: _woLoserId == widget.challengedId,
+                onTap: () => setState(() {
+                  _woLoserId = _woLoserId == widget.challengedId
+                      ? null
+                      : widget.challengedId;
+                }),
+              ),
+            ),
+          ],
+        ),
+        if (_woLoserId != null) ...[
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Icon(Icons.emoji_events, size: 16, color: AppColors.secondary),
+              const SizedBox(width: 6),
+              Text(
+                '$woWinnerName vence por WO',
+                style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
               ),
             ],
+          ),
+          const SizedBox(height: 12),
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton(
+              onPressed: _isSubmitting ? null : _submitWo,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.warning,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(vertical: 12),
+              ),
+              child: _isSubmitting
+                  ? const SizedBox(
+                      width: 18,
+                      height: 18,
+                      child: CircularProgressIndicator(
+                          strokeWidth: 2, color: Colors.white),
+                    )
+                  : const Text('Registrar WO'),
+            ),
+          ),
+        ],
+      ],
+    );
+  }
+
+  Widget _buildWoChip(String name, {required bool isSelected, required VoidCallback onTap}) {
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 150),
+        padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 12),
+        decoration: BoxDecoration(
+          color: isSelected
+              ? AppColors.warning.withAlpha(15)
+              : AppColors.surfaceVariant,
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(
+            color: isSelected ? AppColors.warning : AppColors.divider,
+            width: isSelected ? 1.5 : 1,
+          ),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            if (isSelected)
+              Padding(
+                padding: const EdgeInsets.only(right: 6),
+                child: Icon(Icons.person_off, size: 14, color: AppColors.warning),
+              ),
+            Text(
+              name,
+              style: TextStyle(
+                fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+                fontSize: 13,
+                color: isSelected ? AppColors.warning : AppColors.onBackgroundMedium,
+              ),
+            ),
           ],
         ),
       ),
@@ -1046,71 +1065,6 @@ class _SetScoreInput {
     }
     return (challengerGames == 7 && challengedGames == 6) ||
         (challengerGames == 6 && challengedGames == 7);
-  }
-}
-
-/// WO selection button
-class _WoButton extends StatelessWidget {
-  final String label;
-  final String sublabel;
-  final bool isSelected;
-  final VoidCallback onTap;
-
-  const _WoButton({
-    required this.label,
-    required this.sublabel,
-    required this.isSelected,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
-        decoration: BoxDecoration(
-          color: isSelected
-              ? AppColors.warning.withAlpha(20)
-              : AppColors.surfaceVariant,
-          borderRadius: BorderRadius.circular(10),
-          border: Border.all(
-            color: isSelected ? AppColors.warning : AppColors.divider,
-            width: isSelected ? 2 : 1,
-          ),
-        ),
-        child: Column(
-          children: [
-            Icon(
-              Icons.person_off,
-              size: 24,
-              color: isSelected ? AppColors.warning : AppColors.onBackgroundLight,
-            ),
-            const SizedBox(height: 4),
-            Text(
-              label,
-              style: TextStyle(
-                fontWeight: FontWeight.w600,
-                fontSize: 13,
-                color: isSelected ? AppColors.warning : null,
-              ),
-              textAlign: TextAlign.center,
-            ),
-            Text(
-              sublabel,
-              style: TextStyle(
-                fontSize: 11,
-                color: isSelected
-                    ? AppColors.warning.withAlpha(180)
-                    : AppColors.onBackgroundLight,
-              ),
-              textAlign: TextAlign.center,
-            ),
-          ],
-        ),
-      ),
-    );
   }
 }
 
