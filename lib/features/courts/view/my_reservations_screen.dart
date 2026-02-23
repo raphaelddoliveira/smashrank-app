@@ -94,6 +94,10 @@ class _ReservationCard extends ConsumerWidget {
     final isToday = resDate == today;
     final isTomorrow = resDate == today.add(const Duration(days: 1));
 
+    final currentPlayer = ref.watch(currentPlayerProvider).valueOrNull;
+    final isMine = reservation.reservedBy == currentPlayer?.id;
+    final isOpponent = reservation.opponentId == currentPlayer?.id;
+
     final accentColor =
         reservation.isChallenge ? AppColors.secondary : AppColors.primary;
     final accentDark =
@@ -111,141 +115,159 @@ class _ReservationCard extends ConsumerWidget {
               )
             : null,
         padding: const EdgeInsets.all(16),
-        child: Row(
+        child: Column(
           children: [
-            Container(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-              decoration: BoxDecoration(
-                color: accentColor.withAlpha(20),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Column(
-                children: [
-                  if (reservation.isChallenge)
-                    Padding(
-                      padding: const EdgeInsets.only(bottom: 2),
-                      child: Icon(Icons.emoji_events,
-                          size: 14, color: accentDark),
-                    ),
-                  Text(
-                    reservation.reservationDate.day
-                        .toString()
-                        .padLeft(2, '0'),
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 20,
-                      color: accentDark,
-                    ),
+            Row(
+              children: [
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: accentColor.withAlpha(20),
+                    borderRadius: BorderRadius.circular(8),
                   ),
-                  Text(
-                    '${reservation.reservationDate.month.toString().padLeft(2, '0')}/${reservation.reservationDate.year}',
-                    style: TextStyle(
-                      fontSize: 10,
-                      color: accentDark,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    reservation.courtName ?? 'Local',
-                    style: const TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 16,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Row(
+                  child: Column(
                     children: [
-                      const Icon(Icons.access_time,
-                          size: 14, color: AppColors.onBackgroundLight),
-                      const SizedBox(width: 4),
+                      if (reservation.isChallenge)
+                        Padding(
+                          padding: const EdgeInsets.only(bottom: 2),
+                          child: Icon(Icons.emoji_events,
+                              size: 14, color: accentDark),
+                        ),
                       Text(
-                        reservation.timeRange,
-                        style: const TextStyle(
-                            fontSize: 13,
-                            color: AppColors.onBackgroundLight),
+                        reservation.reservationDate.day
+                            .toString()
+                            .padLeft(2, '0'),
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 20,
+                          color: accentDark,
+                        ),
+                      ),
+                      Text(
+                        '${reservation.reservationDate.month.toString().padLeft(2, '0')}/${reservation.reservationDate.year}',
+                        style: TextStyle(
+                          fontSize: 10,
+                          color: accentDark,
+                        ),
                       ),
                     ],
                   ),
-                  // Opponent info
-                  if (reservation.hasOpponentDeclared ||
-                      reservation.isFriendly) ...[
-                    const SizedBox(height: 4),
-                    Row(
-                      children: [
-                        Icon(
-                          reservation.hasOpponentDeclared
-                              ? Icons.person
-                              : Icons.person_outline,
-                          size: 14,
-                          color: reservation.hasOpponentDeclared
-                              ? AppColors.onBackgroundMedium
-                              : AppColors.warning,
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        reservation.courtName ?? 'Local',
+                        style: const TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
                         ),
-                        const SizedBox(width: 4),
-                        Expanded(
-                          child: Text(
-                            'vs ${reservation.opponentDisplayName}',
-                            style: TextStyle(
-                              fontSize: 12,
+                      ),
+                      const SizedBox(height: 4),
+                      Row(
+                        children: [
+                          const Icon(Icons.access_time,
+                              size: 14, color: AppColors.onBackgroundLight),
+                          const SizedBox(width: 4),
+                          Text(
+                            reservation.timeRange,
+                            style: const TextStyle(
+                                fontSize: 13,
+                                color: AppColors.onBackgroundLight),
+                          ),
+                        ],
+                      ),
+                      // Opponent info
+                      if (reservation.hasOpponentDeclared ||
+                          reservation.isFriendly) ...[
+                        const SizedBox(height: 4),
+                        Row(
+                          children: [
+                            Icon(
+                              reservation.hasOpponentDeclared
+                                  ? Icons.person
+                                  : Icons.person_outline,
+                              size: 14,
                               color: reservation.hasOpponentDeclared
                                   ? AppColors.onBackgroundMedium
                                   : AppColors.warning,
-                              fontStyle: reservation.hasOpponentDeclared
-                                  ? FontStyle.normal
-                                  : FontStyle.italic,
                             ),
-                          ),
+                            const SizedBox(width: 4),
+                            Expanded(
+                              child: Text(
+                                'vs ${reservation.opponentDisplayName}',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: reservation.hasOpponentDeclared
+                                      ? AppColors.onBackgroundMedium
+                                      : AppColors.warning,
+                                  fontStyle: reservation.hasOpponentDeclared
+                                      ? FontStyle.normal
+                                      : FontStyle.italic,
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
                       ],
-                    ),
-                  ],
-                  // Badges row
-                  const SizedBox(height: 4),
-                  Wrap(
-                    spacing: 6,
-                    runSpacing: 4,
-                    children: [
-                      if (isToday || isTomorrow)
-                        _Badge(
-                          label: isToday ? 'Hoje' : 'Amanhã',
-                          color:
-                              isToday ? AppColors.warning : AppColors.info,
-                        ),
-                      if (reservation.isChallenge)
-                        _Badge(
-                          label: 'Ranking',
-                          color: AppColors.secondary,
-                          icon: Icons.emoji_events,
-                        ),
-                      if (!reservation.hasOpponentDeclared &&
-                          reservation.isFriendly)
-                        GestureDetector(
-                          onTap: () => _showDeclareOpponentSheet(
-                              context, ref, reservation),
-                          child: _Badge(
-                            label: 'Declarar oponente',
-                            color: AppColors.warning,
-                          ),
-                        ),
+                      // Badges row
+                      const SizedBox(height: 4),
+                      Wrap(
+                        spacing: 6,
+                        runSpacing: 4,
+                        children: [
+                          if (isToday || isTomorrow)
+                            _Badge(
+                              label: isToday ? 'Hoje' : 'Amanhã',
+                              color:
+                                  isToday ? AppColors.warning : AppColors.info,
+                            ),
+                          if (reservation.isChallenge)
+                            _Badge(
+                              label: 'Ranking',
+                              color: AppColors.secondary,
+                              icon: Icons.emoji_events,
+                            ),
+                          if (isOpponent && !isMine)
+                            _Badge(
+                              label: 'Convidado',
+                              color: AppColors.info,
+                              icon: Icons.person,
+                            ),
+                          if (isMine &&
+                              !reservation.hasOpponentDeclared &&
+                              reservation.isFriendly &&
+                              !reservation.hasCandidate)
+                            GestureDetector(
+                              onTap: () => _showDeclareOpponentSheet(
+                                  context, ref, reservation),
+                              child: _Badge(
+                                label: 'Declarar oponente',
+                                color: AppColors.warning,
+                              ),
+                            ),
+                        ],
+                      ),
                     ],
                   ),
-                ],
-              ),
+                ),
+                if (isMine)
+                  IconButton(
+                    onPressed: () =>
+                        _confirmCancel(context, ref, reservation),
+                    icon: const Icon(Icons.close, color: AppColors.error),
+                    tooltip: 'Cancelar reserva',
+                  ),
+              ],
             ),
-            IconButton(
-              onPressed: () =>
-                  _confirmCancel(context, ref, reservation),
-              icon: const Icon(Icons.close, color: AppColors.error),
-              tooltip: 'Cancelar reserva',
-            ),
+            // Candidate approval section
+            if (isMine && reservation.hasCandidate) ...[
+              const Divider(height: 20),
+              _CandidateApprovalRow(reservation: reservation),
+            ],
           ],
         ),
       ),
@@ -314,6 +336,84 @@ class _ReservationCard extends ConsumerWidget {
         ],
       ),
     );
+  }
+}
+
+// ─── Candidate Approval Row ───
+
+class _CandidateApprovalRow extends ConsumerWidget {
+  final ReservationModel reservation;
+
+  const _CandidateApprovalRow({required this.reservation});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final candidateName = reservation.candidatePlayerName ?? 'Jogador';
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: BoxDecoration(
+        color: AppColors.info.withAlpha(15),
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: Row(
+        children: [
+          Icon(Icons.person_add, size: 18, color: AppColors.info),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              '$candidateName quer jogar com você',
+              style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500),
+            ),
+          ),
+          IconButton(
+            onPressed: () => _reject(context, ref),
+            icon: const Icon(Icons.close, size: 20),
+            color: AppColors.error,
+            tooltip: 'Recusar',
+            constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
+            padding: EdgeInsets.zero,
+          ),
+          const SizedBox(width: 4),
+          IconButton(
+            onPressed: () => _accept(context, ref),
+            icon: const Icon(Icons.check, size: 20),
+            color: AppColors.success,
+            tooltip: 'Aceitar',
+            constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
+            padding: EdgeInsets.zero,
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _accept(BuildContext context, WidgetRef ref) async {
+    final success = await ref
+        .read(reservationActionProvider.notifier)
+        .acceptCandidate(reservation.id);
+    if (context.mounted) {
+      if (success) {
+        SnackbarUtils.showSuccess(context, 'Candidatura aceita!');
+        ref.invalidate(myReservationsProvider);
+      } else {
+        SnackbarUtils.showError(context, 'Erro ao aceitar candidatura');
+      }
+    }
+  }
+
+  void _reject(BuildContext context, WidgetRef ref) async {
+    final success = await ref
+        .read(reservationActionProvider.notifier)
+        .rejectCandidate(reservation.id);
+    if (context.mounted) {
+      if (success) {
+        SnackbarUtils.showSuccess(context, 'Candidatura recusada');
+        ref.invalidate(myReservationsProvider);
+      } else {
+        SnackbarUtils.showError(context, 'Erro ao recusar candidatura');
+      }
+    }
   }
 }
 

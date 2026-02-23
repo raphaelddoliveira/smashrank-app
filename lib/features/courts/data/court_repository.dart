@@ -17,6 +17,14 @@ class CourtRepository {
 
   CourtRepository(this._client);
 
+  static const _reservationSelect = '''
+    *,
+    court:courts!court_id(name),
+    player:players!reserved_by(full_name),
+    opponent:players!opponent_id(full_name),
+    candidate:players!candidate_id(full_name)
+''';
+
   /// Get all active courts for a club, optionally filtered by sport
   Future<List<CourtModel>> getCourts({required String clubId, String? sportId}) async {
     try {
@@ -168,12 +176,7 @@ class CourtRepository {
           '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
       final data = await _client
           .from(SupabaseConstants.courtReservationsTable)
-          .select('''
-            *,
-            court:courts!court_id(name),
-            player:players!reserved_by(full_name),
-            opponent:players!opponent_id(full_name)
-''')
+          .select(_reservationSelect)
           .eq('court_id', courtId)
           .eq('reservation_date', dateStr)
           .eq('status', 'confirmed')
@@ -235,22 +238,19 @@ class CourtRepository {
     }
   }
 
-  /// Get current player's reservations
+  /// Get current player's reservations (own + as accepted opponent)
   Future<List<ReservationModel>> getMyReservations() async {
     try {
       final playerId = await _getCurrentPlayerId();
+      final today = DateTime.now();
+      final dateStr =
+          '${today.year}-${today.month.toString().padLeft(2, '0')}-${today.day.toString().padLeft(2, '0')}';
       final data = await _client
           .from(SupabaseConstants.courtReservationsTable)
-          .select('''
-            *,
-            court:courts!court_id(name),
-            player:players!reserved_by(full_name),
-            opponent:players!opponent_id(full_name)
-''')
-          .eq('reserved_by', playerId)
+          .select(_reservationSelect)
+          .or('reserved_by.eq.$playerId,opponent_id.eq.$playerId')
           .eq('status', 'confirmed')
-          .gte('reservation_date',
-              '${DateTime.now().year}-${DateTime.now().month.toString().padLeft(2, '0')}-${DateTime.now().day.toString().padLeft(2, '0')}')
+          .gte('reservation_date', dateStr)
           .order('reservation_date')
           .order('start_time');
       return data.map((e) => ReservationModel.fromJson(e)).toList();
@@ -265,12 +265,7 @@ class CourtRepository {
       final playerId = await _getCurrentPlayerId();
       final data = await _client
           .from(SupabaseConstants.courtReservationsTable)
-          .select('''
-            *,
-            court:courts!court_id(name),
-            player:players!reserved_by(full_name),
-            opponent:players!opponent_id(full_name)
-''')
+          .select(_reservationSelect)
           .eq('reserved_by', playerId)
           .order('reservation_date', ascending: false)
           .order('start_time', ascending: false)
@@ -287,12 +282,7 @@ class CourtRepository {
     try {
       final data = await _client
           .from(SupabaseConstants.courtReservationsTable)
-          .select('''
-            *,
-            court:courts!court_id(name),
-            player:players!reserved_by(full_name),
-            opponent:players!opponent_id(full_name)
-''')
+          .select(_reservationSelect)
           .eq('challenge_id', challengeId)
           .eq('status', 'confirmed')
           .maybeSingle();
@@ -337,6 +327,116 @@ class CourtRepository {
             'opponent_type': opponentType.name,
             'opponent_id': opponentId,
             'opponent_name': opponentName,
+            'updated_at': DateTime.now().toIso8601String(),
+          })
+          .eq('id', reservationId);
+    } catch (e) {
+      throw ErrorHandler.handle(e);
+    }
+  }
+
+  /// Apply to play in an open reservation (set candidate_id)
+  Future<void> applyToReservation(String reservationId) async {
+    try {
+      final playerId = await _getCurrentPlayerId();
+      await _client
+          .from(SupabaseConstants.courtReservationsTable)
+          .update({
+            'candidate_id': playerId,
+            'updated_at': DateTime.now().toIso8601String(),
+          })
+          .eq('id', reservationId);
+
+      // Get reservation details for notification
+      final res = await _client
+          .from(SupabaseConstants.courtReservationsTable)
+          .select('reserved_by, court_id, reservation_date, club_id, court:courts!court_id(name)')
+          .eq('id', reservationId)
+          .single();
+
+      final playerData = await _client
+          .from(SupabaseConstants.playersTable)
+          .select('full_name')
+          .eq('id', playerId)
+          .single();
+
+      final courtName = (res['court'] as Map<String, dynamic>?)?['name'] ?? 'Quadra';
+      final candidateName = playerData['full_name'] as String? ?? 'Jogador';
+
+      await _client.from(SupabaseConstants.notificationsTable).insert({
+        'player_id': res['reserved_by'],
+        'type': 'general',
+        'title': 'Alguém quer jogar com você!',
+        'body': '$candidateName se candidatou para jogar na reserva de $courtName dia ${res['reservation_date']}',
+        'data': {'reservation_id': reservationId},
+        if (res['club_id'] != null) 'club_id': res['club_id'],
+      });
+    } catch (e) {
+      throw ErrorHandler.handle(e);
+    }
+  }
+
+  /// Accept a candidate (promote to opponent)
+  Future<void> acceptCandidate(String reservationId) async {
+    try {
+      // Get reservation to read candidate_id
+      final res = await _client
+          .from(SupabaseConstants.courtReservationsTable)
+          .select('candidate_id, reserved_by, court_id, reservation_date, club_id, court:courts!court_id(name)')
+          .eq('id', reservationId)
+          .single();
+
+      final candidateId = res['candidate_id'] as String?;
+      if (candidateId == null) return;
+
+      // Get candidate name for opponent_name
+      final candidateData = await _client
+          .from(SupabaseConstants.playersTable)
+          .select('full_name')
+          .eq('id', candidateId)
+          .single();
+
+      // Get owner name for notification
+      final ownerData = await _client
+          .from(SupabaseConstants.playersTable)
+          .select('full_name')
+          .eq('id', res['reserved_by'] as String)
+          .single();
+
+      await _client
+          .from(SupabaseConstants.courtReservationsTable)
+          .update({
+            'opponent_id': candidateId,
+            'opponent_type': 'member',
+            'opponent_name': candidateData['full_name'],
+            'candidate_id': null,
+            'updated_at': DateTime.now().toIso8601String(),
+          })
+          .eq('id', reservationId);
+
+      final courtName = (res['court'] as Map<String, dynamic>?)?['name'] ?? 'Quadra';
+      final ownerName = ownerData['full_name'] as String? ?? 'Jogador';
+
+      await _client.from(SupabaseConstants.notificationsTable).insert({
+        'player_id': candidateId,
+        'type': 'general',
+        'title': 'Candidatura aceita!',
+        'body': '$ownerName aceitou sua candidatura para $courtName dia ${res['reservation_date']}',
+        'data': {'reservation_id': reservationId},
+        if (res['club_id'] != null) 'club_id': res['club_id'],
+      });
+    } catch (e) {
+      throw ErrorHandler.handle(e);
+    }
+  }
+
+  /// Reject a candidate (clear candidate_id)
+  Future<void> rejectCandidate(String reservationId) async {
+    try {
+      await _client
+          .from(SupabaseConstants.courtReservationsTable)
+          .update({
+            'candidate_id': null,
             'updated_at': DateTime.now().toIso8601String(),
           })
           .eq('id', reservationId);

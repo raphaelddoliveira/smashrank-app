@@ -221,6 +221,8 @@ class _CourtScheduleScreenState extends ConsumerState<CourtScheduleScreen> {
     final today = DateTime(now.year, now.month, now.day);
     final isToday = _selectedDate.isAtSameMomentAs(today);
     final isPast = _selectedDate.isBefore(today);
+    final currentPlayer = ref.watch(currentPlayerProvider).valueOrNull;
+    final currentPlayerId = currentPlayer?.id;
 
     return ListView.builder(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
@@ -234,6 +236,13 @@ class _CourtScheduleScreenState extends ConsumerState<CourtScheduleScreen> {
         final isSlotPast = isPast || (isToday && slotHour <= now.hour);
 
         final isChallenge = reservation?.isChallenge ?? false;
+        final isMine = reservation != null && reservation.reservedBy == currentPlayerId;
+        final isMyCandidate = reservation != null && reservation.candidateId == currentPlayerId;
+        final hasOpenSlot = reservation != null &&
+            reservation.isFriendly &&
+            !reservation.hasOpponentDeclared &&
+            !isMine;
+
         final statusColor = isReserved
             ? isChallenge
                 ? AppColors.secondary
@@ -251,11 +260,62 @@ class _CourtScheduleScreenState extends ConsumerState<CourtScheduleScreen> {
             subtitle = opponent != null
                 ? 'Desafio: $name vs $opponent'
                 : 'Desafio - $name';
+          } else if (reservation.hasOpponentDeclared) {
+            subtitle = '$name vs ${reservation.opponentDisplayName}';
           } else {
-            subtitle = 'Reservado - $name';
+            subtitle = '$name · Vaga aberta';
           }
         } else {
           subtitle = isSlotPast ? 'Horário passado' : 'Disponível';
+        }
+
+        // Build trailing action widget
+        Widget trailing;
+        if (!isReserved && !isSlotPast) {
+          trailing = ElevatedButton(
+            onPressed: () => _confirmReservation(slot),
+            style: ElevatedButton.styleFrom(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              minimumSize: const Size(0, 36),
+            ),
+            child: const Text('Reservar', style: TextStyle(fontSize: 13)),
+          );
+        } else if (isMine) {
+          trailing = IconButton(
+            onPressed: () => _confirmCancelFromSchedule(reservation),
+            icon: const Icon(Icons.close, color: AppColors.error, size: 20),
+            tooltip: 'Cancelar reserva',
+          );
+        } else if (isMyCandidate) {
+          trailing = Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+            decoration: BoxDecoration(
+              color: AppColors.warning.withAlpha(25),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: const Text(
+              'Aguardando',
+              style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: AppColors.warning),
+            ),
+          );
+        } else if (hasOpenSlot && !isSlotPast) {
+          trailing = TextButton.icon(
+            onPressed: () => _confirmApply(reservation),
+            icon: const Icon(Icons.sports_tennis, size: 16),
+            label: const Text('Quero jogar', style: TextStyle(fontSize: 12)),
+            style: TextButton.styleFrom(
+              padding: const EdgeInsets.symmetric(horizontal: 8),
+              minimumSize: const Size(0, 32),
+            ),
+          );
+        } else if (isReserved) {
+          trailing = Icon(
+            isChallenge ? Icons.emoji_events : Icons.lock,
+            color: isChallenge ? AppColors.secondary : AppColors.onBackgroundLight,
+            size: 20,
+          );
+        } else {
+          trailing = const SizedBox.shrink();
         }
 
         return Card(
@@ -316,30 +376,90 @@ class _CourtScheduleScreenState extends ConsumerState<CourtScheduleScreen> {
                     ],
                   ),
                 ),
-                if (!isReserved && !isSlotPast)
-                  ElevatedButton(
-                    onPressed: () => _confirmReservation(slot),
-                    style: ElevatedButton.styleFrom(
-                      padding:
-                          const EdgeInsets.symmetric(horizontal: 16),
-                      minimumSize: const Size(0, 36),
-                    ),
-                    child: const Text('Reservar',
-                        style: TextStyle(fontSize: 13)),
-                  )
-                else if (isReserved)
-                  Icon(
-                    isChallenge ? Icons.emoji_events : Icons.lock,
-                    color: isChallenge
-                        ? AppColors.secondary
-                        : AppColors.onBackgroundLight,
-                    size: 20,
-                  ),
+                trailing,
               ],
             ),
           ),
         );
       },
+    );
+  }
+
+  void _confirmCancelFromSchedule(ReservationModel reservation) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Cancelar Reserva'),
+        content: Text(
+          'Cancelar sua reserva das ${reservation.timeRange}?',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: const Text('Não'),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: AppColors.error),
+            onPressed: () async {
+              Navigator.of(ctx).pop();
+              final success = await ref
+                  .read(reservationActionProvider.notifier)
+                  .cancelReservation(reservation.id);
+              if (mounted) {
+                if (success) {
+                  SnackbarUtils.showSuccess(context, 'Reserva cancelada');
+                  ref.invalidate(courtReservationsProvider(
+                    (courtId: widget.courtId, date: _selectedDate),
+                  ));
+                  ref.invalidate(myReservationsProvider);
+                  ref.invalidate(hasActiveFriendlyReservationProvider);
+                } else {
+                  SnackbarUtils.showError(context, 'Erro ao cancelar reserva');
+                }
+              }
+            },
+            child: const Text('Cancelar Reserva'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _confirmApply(ReservationModel reservation) {
+    final ownerName = reservation.playerName ?? 'Jogador';
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Candidatar-se'),
+        content: Text(
+          'Deseja se candidatar para jogar com $ownerName das ${reservation.timeRange}?',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: const Text('Cancelar'),
+          ),
+          FilledButton(
+            onPressed: () async {
+              Navigator.of(ctx).pop();
+              final success = await ref
+                  .read(reservationActionProvider.notifier)
+                  .applyToReservation(reservation.id);
+              if (mounted) {
+                if (success) {
+                  SnackbarUtils.showSuccess(context, 'Candidatura enviada!');
+                  ref.invalidate(courtReservationsProvider(
+                    (courtId: widget.courtId, date: _selectedDate),
+                  ));
+                } else {
+                  SnackbarUtils.showError(context, 'Erro ao se candidatar');
+                }
+              }
+            },
+            child: const Text('Quero jogar!'),
+          ),
+        ],
+      ),
     );
   }
 

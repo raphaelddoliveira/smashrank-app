@@ -6,13 +6,13 @@ import '../../../shared/models/match_model.dart';
 import '../data/challenge_repository.dart';
 
 final challengeDetailProvider =
-    FutureProvider.family<ChallengeModel, String>((ref, challengeId) async {
+    FutureProvider.autoDispose.family<ChallengeModel, String>((ref, challengeId) async {
   final repository = ref.watch(challengeRepositoryProvider);
   return repository.getChallenge(challengeId);
 });
 
 final challengeMatchProvider =
-    FutureProvider.family<MatchModel?, String>((ref, challengeId) async {
+    FutureProvider.autoDispose.family<MatchModel?, String>((ref, challengeId) async {
   final repository = ref.watch(challengeRepositoryProvider);
   return repository.getMatchForChallenge(challengeId);
 });

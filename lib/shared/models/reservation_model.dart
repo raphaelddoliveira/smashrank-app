@@ -19,10 +19,14 @@ class ReservationModel {
   final OpponentType? opponentType;
   final String? opponentName;
 
+  // Candidate field
+  final String? candidateId;
+
   // Joined fields
   final String? courtName;
   final String? playerName;
   final String? opponentPlayerName;
+  final String? candidatePlayerName;
 
   const ReservationModel({
     required this.id,
@@ -40,9 +44,11 @@ class ReservationModel {
     this.opponentId,
     this.opponentType,
     this.opponentName,
+    this.candidateId,
     this.courtName,
     this.playerName,
     this.opponentPlayerName,
+    this.candidatePlayerName,
   });
 
   bool get isConfirmed => status == ReservationStatus.confirmed;
@@ -51,6 +57,7 @@ class ReservationModel {
   bool get isChallenge => challengeId != null;
   bool get isFriendly => challengeId == null;
   bool get hasOpponentDeclared => opponentType != null;
+  bool get hasCandidate => candidateId != null;
 
   String get opponentDisplayName {
     if (opponentType == null) return 'Não declarado';
@@ -81,6 +88,7 @@ class ReservationModel {
     final court = json['court'] as Map<String, dynamic>?;
     final player = json['player'] as Map<String, dynamic>?;
     final opponent = json['opponent'] as Map<String, dynamic>?;
+    final candidate = json['candidate'] as Map<String, dynamic>?;
 
     return ReservationModel(
       id: json['id'] as String,
@@ -100,9 +108,11 @@ class ReservationModel {
           ? OpponentType.fromString(json['opponent_type'] as String)
           : null,
       opponentName: json['opponent_name'] as String?,
+      candidateId: json['candidate_id'] as String?,
       courtName: court?['name'] as String?,
       playerName: player?['full_name'] as String?,
       opponentPlayerName: opponent?['full_name'] as String?,
+      candidatePlayerName: candidate?['full_name'] as String?,
     );
   }
 

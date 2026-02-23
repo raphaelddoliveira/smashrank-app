@@ -111,4 +111,40 @@ class ReservationActionNotifier extends StateNotifier<AsyncValue<void>> {
       return false;
     }
   }
+
+  Future<bool> applyToReservation(String reservationId) async {
+    state = const AsyncLoading();
+    try {
+      await _repository.applyToReservation(reservationId);
+      state = const AsyncData(null);
+      return true;
+    } on AppException catch (e, st) {
+      state = AsyncError(e, st);
+      return false;
+    }
+  }
+
+  Future<bool> acceptCandidate(String reservationId) async {
+    state = const AsyncLoading();
+    try {
+      await _repository.acceptCandidate(reservationId);
+      state = const AsyncData(null);
+      return true;
+    } on AppException catch (e, st) {
+      state = AsyncError(e, st);
+      return false;
+    }
+  }
+
+  Future<bool> rejectCandidate(String reservationId) async {
+    state = const AsyncLoading();
+    try {
+      await _repository.rejectCandidate(reservationId);
+      state = const AsyncData(null);
+      return true;
+    } on AppException catch (e, st) {
+      state = AsyncError(e, st);
+      return false;
+    }
+  }
 }
