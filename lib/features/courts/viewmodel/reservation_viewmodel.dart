@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/errors/app_exception.dart';
+import '../../../shared/models/enums.dart';
 import '../../../shared/models/reservation_model.dart';
 import '../data/court_repository.dart';
 
@@ -28,6 +29,13 @@ final myReservationHistoryProvider =
   return repository.getMyReservationHistory();
 });
 
+/// Whether current player already has an active friendly (non-challenge) reservation
+final hasActiveFriendlyReservationProvider = FutureProvider<bool>((ref) async {
+  final repository = ref.watch(courtRepositoryProvider);
+  final count = await repository.getActiveFriendlyReservationCount();
+  return count > 0;
+});
+
 /// Action notifier for creating/cancelling reservations
 final reservationActionProvider =
     StateNotifierProvider<ReservationActionNotifier, AsyncValue<void>>((ref) {
@@ -46,6 +54,9 @@ class ReservationActionNotifier extends StateNotifier<AsyncValue<void>> {
     required String startTime,
     required String endTime,
     String? challengeId,
+    String? opponentId,
+    OpponentType? opponentType,
+    String? opponentName,
   }) async {
     state = const AsyncLoading();
     try {
@@ -55,6 +66,31 @@ class ReservationActionNotifier extends StateNotifier<AsyncValue<void>> {
         startTime: startTime,
         endTime: endTime,
         challengeId: challengeId,
+        opponentId: opponentId,
+        opponentType: opponentType,
+        opponentName: opponentName,
+      );
+      state = const AsyncData(null);
+      return true;
+    } on AppException catch (e, st) {
+      state = AsyncError(e, st);
+      return false;
+    }
+  }
+
+  Future<bool> updateOpponent(
+    String reservationId, {
+    required OpponentType opponentType,
+    String? opponentId,
+    String? opponentName,
+  }) async {
+    state = const AsyncLoading();
+    try {
+      await _repository.updateReservationOpponent(
+        reservationId,
+        opponentType: opponentType,
+        opponentId: opponentId,
+        opponentName: opponentName,
       );
       state = const AsyncData(null);
       return true;

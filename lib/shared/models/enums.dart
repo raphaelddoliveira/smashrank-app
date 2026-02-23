@@ -151,6 +151,19 @@ enum NotificationType {
       );
 }
 
+enum OpponentType {
+  member,
+  guest;
+
+  String get label => switch (this) {
+        member => 'Membro',
+        guest => 'Convidado',
+      };
+
+  static OpponentType fromString(String value) =>
+      OpponentType.values.firstWhere((e) => e.name == value);
+}
+
 enum DominantHand {
   right,
   left;

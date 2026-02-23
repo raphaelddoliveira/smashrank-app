@@ -14,9 +14,15 @@ class ReservationModel {
   final DateTime createdAt;
   final DateTime updatedAt;
 
+  // Opponent fields
+  final String? opponentId;
+  final OpponentType? opponentType;
+  final String? opponentName;
+
   // Joined fields
   final String? courtName;
   final String? playerName;
+  final String? opponentPlayerName;
 
   const ReservationModel({
     required this.id,
@@ -31,13 +37,28 @@ class ReservationModel {
     this.notes,
     required this.createdAt,
     required this.updatedAt,
+    this.opponentId,
+    this.opponentType,
+    this.opponentName,
     this.courtName,
     this.playerName,
+    this.opponentPlayerName,
   });
 
   bool get isConfirmed => status == ReservationStatus.confirmed;
   bool get isCancelled => status == ReservationStatus.cancelled;
   bool get isPast => reservationDate.isBefore(DateTime.now());
+  bool get isChallenge => challengeId != null;
+  bool get isFriendly => challengeId == null;
+  bool get hasOpponentDeclared => opponentType != null;
+
+  String get opponentDisplayName {
+    if (opponentType == null) return 'Não declarado';
+    if (opponentType == OpponentType.guest) {
+      return opponentName ?? 'Convidado';
+    }
+    return opponentPlayerName ?? opponentName ?? 'Membro';
+  }
 
   String get timeRange {
     final start = _formatTime(startTime);
@@ -59,6 +80,7 @@ class ReservationModel {
   factory ReservationModel.fromJson(Map<String, dynamic> json) {
     final court = json['court'] as Map<String, dynamic>?;
     final player = json['player'] as Map<String, dynamic>?;
+    final opponent = json['opponent'] as Map<String, dynamic>?;
 
     return ReservationModel(
       id: json['id'] as String,
@@ -73,8 +95,14 @@ class ReservationModel {
       notes: json['notes'] as String?,
       createdAt: DateTime.parse(json['created_at'] as String),
       updatedAt: DateTime.parse(json['updated_at'] as String),
+      opponentId: json['opponent_id'] as String?,
+      opponentType: json['opponent_type'] != null
+          ? OpponentType.fromString(json['opponent_type'] as String)
+          : null,
+      opponentName: json['opponent_name'] as String?,
       courtName: court?['name'] as String?,
       playerName: player?['full_name'] as String?,
+      opponentPlayerName: opponent?['full_name'] as String?,
     );
   }
 
@@ -89,6 +117,9 @@ class ReservationModel {
       'status': status.name,
       if (challengeId != null) 'challenge_id': challengeId,
       if (notes != null) 'notes': notes,
+      if (opponentId != null) 'opponent_id': opponentId,
+      if (opponentType != null) 'opponent_type': opponentType!.name,
+      if (opponentName != null) 'opponent_name': opponentName,
     };
   }
 }

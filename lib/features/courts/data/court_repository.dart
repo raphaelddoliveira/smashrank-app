@@ -5,6 +5,7 @@ import '../../../core/constants/supabase_constants.dart';
 import '../../../core/errors/error_handler.dart';
 import '../../../services/supabase_service.dart';
 import '../../../shared/models/court_model.dart';
+import '../../../shared/models/enums.dart';
 import '../../../shared/models/reservation_model.dart';
 
 final courtRepositoryProvider = Provider<CourtRepository>((ref) {
@@ -170,8 +171,9 @@ class CourtRepository {
           .select('''
             *,
             court:courts!court_id(name),
-            player:players!reserved_by(full_name)
-          ''')
+            player:players!reserved_by(full_name),
+            opponent:players!opponent_id(full_name)
+''')
           .eq('court_id', courtId)
           .eq('reservation_date', dateStr)
           .eq('status', 'confirmed')
@@ -191,6 +193,9 @@ class CourtRepository {
     String? clubId,
     String? challengeId,
     String? notes,
+    String? opponentId,
+    OpponentType? opponentType,
+    String? opponentName,
   }) async {
     try {
       final playerId = await _getCurrentPlayerId();
@@ -206,6 +211,9 @@ class CourtRepository {
         if (clubId != null) 'club_id': clubId,
         if (challengeId != null) 'challenge_id': challengeId,
         if (notes != null) 'notes': notes,
+        if (opponentId != null) 'opponent_id': opponentId,
+        if (opponentType != null) 'opponent_type': opponentType.name,
+        if (opponentName != null) 'opponent_name': opponentName,
       });
     } catch (e) {
       throw ErrorHandler.handle(e);
@@ -236,8 +244,9 @@ class CourtRepository {
           .select('''
             *,
             court:courts!court_id(name),
-            player:players!reserved_by(full_name)
-          ''')
+            player:players!reserved_by(full_name),
+            opponent:players!opponent_id(full_name)
+''')
           .eq('reserved_by', playerId)
           .eq('status', 'confirmed')
           .gte('reservation_date',
@@ -259,8 +268,9 @@ class CourtRepository {
           .select('''
             *,
             court:courts!court_id(name),
-            player:players!reserved_by(full_name)
-          ''')
+            player:players!reserved_by(full_name),
+            opponent:players!opponent_id(full_name)
+''')
           .eq('reserved_by', playerId)
           .order('reservation_date', ascending: false)
           .order('start_time', ascending: false)
@@ -280,13 +290,56 @@ class CourtRepository {
           .select('''
             *,
             court:courts!court_id(name),
-            player:players!reserved_by(full_name)
-          ''')
+            player:players!reserved_by(full_name),
+            opponent:players!opponent_id(full_name)
+''')
           .eq('challenge_id', challengeId)
           .eq('status', 'confirmed')
           .maybeSingle();
       if (data == null) return null;
       return ReservationModel.fromJson(data);
+    } catch (e) {
+      throw ErrorHandler.handle(e);
+    }
+  }
+
+  /// Count active friendly (non-challenge) reservations for current player
+  Future<int> getActiveFriendlyReservationCount() async {
+    try {
+      final playerId = await _getCurrentPlayerId();
+      final today = DateTime.now();
+      final dateStr =
+          '${today.year}-${today.month.toString().padLeft(2, '0')}-${today.day.toString().padLeft(2, '0')}';
+      final data = await _client
+          .from(SupabaseConstants.courtReservationsTable)
+          .select('id')
+          .eq('reserved_by', playerId)
+          .eq('status', 'confirmed')
+          .isFilter('challenge_id', null)
+          .gte('reservation_date', dateStr);
+      return data.length;
+    } catch (e) {
+      throw ErrorHandler.handle(e);
+    }
+  }
+
+  /// Update the opponent on an existing reservation
+  Future<void> updateReservationOpponent(
+    String reservationId, {
+    required OpponentType opponentType,
+    String? opponentId,
+    String? opponentName,
+  }) async {
+    try {
+      await _client
+          .from(SupabaseConstants.courtReservationsTable)
+          .update({
+            'opponent_type': opponentType.name,
+            'opponent_id': opponentId,
+            'opponent_name': opponentName,
+            'updated_at': DateTime.now().toIso8601String(),
+          })
+          .eq('id', reservationId);
     } catch (e) {
       throw ErrorHandler.handle(e);
     }

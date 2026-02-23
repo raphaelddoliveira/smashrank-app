@@ -453,7 +453,11 @@ class _ChallengeCourtSelectionScreenState
           ref.invalidate(activeChallengesProvider);
           context.pop();
         } else {
-          SnackbarUtils.showError(context, 'Erro ao reservar quadra');
+          final errorState = ref.read(challengeActionProvider);
+          final msg = errorState is AsyncError
+              ? errorState.error.toString()
+              : 'Erro ao reservar quadra';
+          SnackbarUtils.showError(context, msg);
         }
       }
     } finally {

@@ -3,10 +3,14 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/theme/app_colors.dart';
 import '../../../core/utils/snackbar_utils.dart';
+import '../../../shared/models/club_member_model.dart';
 import '../../../shared/models/court_model.dart';
+import '../../../shared/models/enums.dart';
 import '../../../shared/models/reservation_model.dart';
 import '../../../shared/models/time_slot.dart';
+import '../../../shared/providers/current_player_provider.dart';
 import '../../../shared/utils/slot_generator.dart';
+import '../../clubs/viewmodel/club_providers.dart';
 import '../data/court_repository.dart';
 import '../viewmodel/reservation_viewmodel.dart';
 
@@ -229,15 +233,43 @@ class _CourtScheduleScreenState extends ConsumerState<CourtScheduleScreen> {
         final slotHour = int.tryParse(slot.startTime.split(':')[0]) ?? 0;
         final isSlotPast = isPast || (isToday && slotHour <= now.hour);
 
+        final isChallenge = reservation?.isChallenge ?? false;
         final statusColor = isReserved
-            ? AppColors.error
+            ? isChallenge
+                ? AppColors.secondary
+                : AppColors.error
             : isSlotPast
                 ? AppColors.onBackgroundLight
                 : AppColors.success;
 
+        // Build subtitle for reserved slots
+        String subtitle;
+        if (isReserved) {
+          final name = reservation.playerName ?? 'Jogador';
+          if (isChallenge) {
+            final opponent = reservation.opponentPlayerName;
+            subtitle = opponent != null
+                ? 'Desafio: $name vs $opponent'
+                : 'Desafio - $name';
+          } else {
+            subtitle = 'Reservado - $name';
+          }
+        } else {
+          subtitle = isSlotPast ? 'Horário passado' : 'Disponível';
+        }
+
         return Card(
           margin: const EdgeInsets.only(bottom: 6),
-          child: Padding(
+          clipBehavior: Clip.antiAlias,
+          child: Container(
+            decoration: isChallenge
+                ? BoxDecoration(
+                    border: Border(
+                      left: BorderSide(
+                          color: AppColors.secondary, width: 3),
+                    ),
+                  )
+                : null,
             padding:
                 const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
             child: Row(
@@ -250,14 +282,17 @@ class _CourtScheduleScreenState extends ConsumerState<CourtScheduleScreen> {
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Center(
-                    child: Text(
-                      slot.startTime,
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 15,
-                        color: statusColor,
-                      ),
-                    ),
+                    child: isChallenge
+                        ? Icon(Icons.emoji_events,
+                            size: 22, color: statusColor)
+                        : Text(
+                            slot.startTime,
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 15,
+                              color: statusColor,
+                            ),
+                          ),
                   ),
                 ),
                 const SizedBox(width: 12),
@@ -274,11 +309,7 @@ class _CourtScheduleScreenState extends ConsumerState<CourtScheduleScreen> {
                       ),
                       const SizedBox(height: 2),
                       Text(
-                        isReserved
-                            ? 'Reservado - ${reservation.playerName ?? 'Jogador'}'
-                            : isSlotPast
-                                ? 'Horário passado'
-                                : 'Disponível',
+                        subtitle,
                         style:
                             TextStyle(fontSize: 12, color: statusColor),
                       ),
@@ -297,7 +328,13 @@ class _CourtScheduleScreenState extends ConsumerState<CourtScheduleScreen> {
                         style: TextStyle(fontSize: 13)),
                   )
                 else if (isReserved)
-                  const Icon(Icons.lock, color: AppColors.onBackgroundLight, size: 20),
+                  Icon(
+                    isChallenge ? Icons.emoji_events : Icons.lock,
+                    color: isChallenge
+                        ? AppColors.secondary
+                        : AppColors.onBackgroundLight,
+                    size: 20,
+                  ),
               ],
             ),
           ),
@@ -330,50 +367,61 @@ class _CourtScheduleScreenState extends ConsumerState<CourtScheduleScreen> {
     }
   }
 
-  void _confirmReservation(TimeSlot slot) {
+  void _confirmReservation(TimeSlot slot) async {
+    // Check friendly reservation limit
+    final hasFriendly =
+        await ref.read(hasActiveFriendlyReservationProvider.future);
+    if (hasFriendly && mounted) {
+      SnackbarUtils.showError(
+        context,
+        'Você já tem uma reserva amistosa ativa. Cancele ou conclua antes de reservar outra.',
+      );
+      return;
+    }
+    if (!mounted) return;
+
     final courtName =
         ref.read(_courtProvider(widget.courtId)).valueOrNull?.name ?? 'Quadra';
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Confirmar Reserva'),
-        content: Text(
-          'Reservar $courtName em '
-          '${_selectedDate.day.toString().padLeft(2, '0')}/${_selectedDate.month.toString().padLeft(2, '0')} '
-          'das ${slot.timeRange}?',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(),
-            child: const Text('Cancelar'),
-          ),
-          ElevatedButton(
-            onPressed: () async {
-              Navigator.of(ctx).pop();
-              final success = await ref
-                  .read(reservationActionProvider.notifier)
-                  .createReservation(
-                    courtId: widget.courtId,
-                    date: _selectedDate,
-                    startTime: slot.startTime,
-                    endTime: slot.endTime,
-                  );
+    final clubId = ref.read(currentClubIdProvider);
 
-              if (mounted) {
-                if (success) {
-                  SnackbarUtils.showSuccess(context, 'Reserva confirmada!');
-                  ref.invalidate(courtReservationsProvider(
-                    (courtId: widget.courtId, date: _selectedDate),
-                  ));
-                  ref.invalidate(myReservationsProvider);
-                } else {
-                  SnackbarUtils.showError(context, 'Erro ao reservar');
-                }
-              }
-            },
-            child: const Text('Confirmar'),
-          ),
-        ],
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) => _ReservationBottomSheet(
+        courtName: courtName,
+        date: _selectedDate,
+        slot: slot,
+        clubId: clubId,
+        onConfirm: (opponentType, opponentId, opponentName) async {
+          Navigator.of(ctx).pop();
+          final success = await ref
+              .read(reservationActionProvider.notifier)
+              .createReservation(
+                courtId: widget.courtId,
+                date: _selectedDate,
+                startTime: slot.startTime,
+                endTime: slot.endTime,
+                opponentType: opponentType,
+                opponentId: opponentId,
+                opponentName: opponentName,
+              );
+
+          if (mounted) {
+            if (success) {
+              SnackbarUtils.showSuccess(context, 'Reserva confirmada!');
+              ref.invalidate(courtReservationsProvider(
+                (courtId: widget.courtId, date: _selectedDate),
+              ));
+              ref.invalidate(myReservationsProvider);
+              ref.invalidate(hasActiveFriendlyReservationProvider);
+            } else {
+              SnackbarUtils.showError(context, 'Erro ao reservar');
+            }
+          }
+        },
       ),
     );
   }
@@ -440,5 +488,307 @@ class _CourtScheduleScreenState extends ConsumerState<CourtScheduleScreen> {
       6 => 'Sábado',
       _ => '',
     };
+  }
+}
+
+// ─── Reservation Bottom Sheet with Opponent Picker ───
+
+class _ReservationBottomSheet extends ConsumerStatefulWidget {
+  final String courtName;
+  final DateTime date;
+  final TimeSlot slot;
+  final String? clubId;
+  final void Function(
+    OpponentType? opponentType,
+    String? opponentId,
+    String? opponentName,
+  ) onConfirm;
+
+  const _ReservationBottomSheet({
+    required this.courtName,
+    required this.date,
+    required this.slot,
+    required this.clubId,
+    required this.onConfirm,
+  });
+
+  @override
+  ConsumerState<_ReservationBottomSheet> createState() =>
+      _ReservationBottomSheetState();
+}
+
+class _ReservationBottomSheetState
+    extends ConsumerState<_ReservationBottomSheet> {
+  // null = declarar depois, member = membro, guest = convidado
+  OpponentType? _selectedType;
+  ClubMemberModel? _selectedMember;
+  String _searchQuery = '';
+  final _searchController = TextEditingController();
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final dateStr =
+        '${widget.date.day.toString().padLeft(2, '0')}/${widget.date.month.toString().padLeft(2, '0')}';
+
+    return Padding(
+      padding: EdgeInsets.only(
+        bottom: MediaQuery.of(context).viewInsets.bottom,
+      ),
+      child: SafeArea(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Handle
+              Center(
+                child: Container(
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: AppColors.divider,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+
+              // Title
+              Text(
+                'Confirmar Reserva',
+                style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
+              ),
+              const SizedBox(height: 12),
+
+              // Summary
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: AppColors.primary.withAlpha(15),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Row(
+                  children: [
+                    Icon(Icons.event, color: AppColors.primary, size: 20),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        '${widget.courtName} · $dateStr · ${widget.slot.timeRange}',
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.primary,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 20),
+
+              // Opponent section
+              Text(
+                'Oponente (opcional)',
+                style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                      fontWeight: FontWeight.w700,
+                    ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                'Você pode declarar depois em "Minhas Reservas"',
+                style: TextStyle(
+                  fontSize: 12,
+                  color: AppColors.onBackgroundLight,
+                ),
+              ),
+              const SizedBox(height: 12),
+
+              // Opponent type chips
+              Wrap(
+                spacing: 8,
+                children: [
+                  ChoiceChip(
+                    label: const Text('Declarar depois'),
+                    selected: _selectedType == null,
+                    onSelected: (_) => setState(() {
+                      _selectedType = null;
+                      _selectedMember = null;
+                    }),
+                  ),
+                  ChoiceChip(
+                    label: const Text('Membro'),
+                    selected: _selectedType == OpponentType.member,
+                    onSelected: (_) => setState(() {
+                      _selectedType = OpponentType.member;
+                    }),
+                  ),
+                  ChoiceChip(
+                    label: const Text('Convidado'),
+                    selected: _selectedType == OpponentType.guest,
+                    onSelected: (_) => setState(() {
+                      _selectedType = OpponentType.guest;
+                      _selectedMember = null;
+                    }),
+                  ),
+                ],
+              ),
+
+              // Member search (when type = member)
+              if (_selectedType == OpponentType.member) ...[
+                const SizedBox(height: 12),
+                _buildMemberPicker(),
+              ],
+
+              const SizedBox(height: 24),
+
+              // Confirm button
+              SizedBox(
+                width: double.infinity,
+                height: 48,
+                child: FilledButton.icon(
+                  onPressed: _canConfirm ? _doConfirm : null,
+                  icon: const Icon(Icons.check),
+                  label: const Text('Confirmar Reserva'),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  bool get _canConfirm {
+    if (_selectedType == OpponentType.member && _selectedMember == null) {
+      return false;
+    }
+    return true;
+  }
+
+  void _doConfirm() {
+    widget.onConfirm(
+      _selectedType,
+      _selectedMember?.playerId,
+      _selectedType == OpponentType.guest
+          ? 'Convidado'
+          : _selectedMember?.displayName,
+    );
+  }
+
+  Widget _buildMemberPicker() {
+    if (widget.clubId == null) {
+      return const Text('Clube não selecionado',
+          style: TextStyle(color: AppColors.onBackgroundLight));
+    }
+
+    final membersAsync = ref.watch(clubMembersProvider(widget.clubId!));
+    final currentPlayer = ref.watch(currentPlayerProvider).valueOrNull;
+
+    return Column(
+      children: [
+        // Search field
+        TextField(
+          controller: _searchController,
+          decoration: InputDecoration(
+            hintText: 'Buscar membro...',
+            prefixIcon: const Icon(Icons.search, size: 20),
+            isDense: true,
+            contentPadding:
+                const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+            border:
+                OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+          ),
+          onChanged: (v) => setState(() => _searchQuery = v),
+        ),
+        const SizedBox(height: 8),
+
+        // Member list
+        membersAsync.when(
+          data: (members) {
+            final query = _searchQuery.toLowerCase().trim();
+            final filtered = members.where((m) {
+              if (!m.isActive) return false;
+              // Exclude current player
+              if (currentPlayer != null && m.playerId == currentPlayer.id) {
+                return false;
+              }
+              if (query.isEmpty) return true;
+              return m.playerName.toLowerCase().contains(query) ||
+                  (m.playerNickname?.toLowerCase().contains(query) ?? false);
+            }).toList();
+
+            if (filtered.isEmpty) {
+              return const Padding(
+                padding: EdgeInsets.symmetric(vertical: 8),
+                child: Text('Nenhum membro encontrado',
+                    style: TextStyle(color: AppColors.onBackgroundLight)),
+              );
+            }
+
+            return ConstrainedBox(
+              constraints: const BoxConstraints(maxHeight: 200),
+              child: ListView.builder(
+                shrinkWrap: true,
+                itemCount: filtered.length,
+                itemBuilder: (context, index) {
+                  final member = filtered[index];
+                  final isSelected =
+                      _selectedMember?.playerId == member.playerId;
+                  return ListTile(
+                    dense: true,
+                    selected: isSelected,
+                    selectedTileColor: AppColors.primary.withAlpha(15),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8)),
+                    leading: CircleAvatar(
+                      radius: 16,
+                      backgroundColor: isSelected
+                          ? AppColors.primary
+                          : AppColors.primaryLight,
+                      child: Text(
+                        member.playerName[0].toUpperCase(),
+                        style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 13,
+                            fontWeight: FontWeight.w700),
+                      ),
+                    ),
+                    title: Text(
+                      member.displayName,
+                      style: const TextStyle(
+                          fontSize: 14, fontWeight: FontWeight.w600),
+                    ),
+                    subtitle: member.rankingPosition != null
+                        ? Text('#${member.rankingPosition}',
+                            style: const TextStyle(fontSize: 12))
+                        : null,
+                    trailing: isSelected
+                        ? const Icon(Icons.check_circle,
+                            color: AppColors.primary, size: 20)
+                        : null,
+                    onTap: () =>
+                        setState(() => _selectedMember = member),
+                  );
+                },
+              ),
+            );
+          },
+          loading: () => const Padding(
+            padding: EdgeInsets.symmetric(vertical: 8),
+            child: Center(child: CircularProgressIndicator()),
+          ),
+          error: (e, _) => Text('Erro: $e'),
+        ),
+      ],
+    );
   }
 }
