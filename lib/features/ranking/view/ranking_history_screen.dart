@@ -41,8 +41,9 @@ class RankingHistoryScreen extends ConsumerWidget {
                       bestPosition: history.isEmpty
                           ? pos
                           : history
-                              .map((e) => e.newPosition)
-                              .reduce((a, b) => a < b ? a : b),
+                              .where((e) => e.newPosition != null)
+                              .map((e) => e.newPosition!)
+                              .fold(pos, (a, b) => a < b ? a : b),
                     );
                   },
                   loading: () => const SizedBox(
@@ -237,7 +238,7 @@ class _SummaryItem extends StatelessWidget {
 class _TimelineEntry extends StatelessWidget {
   final String reasonLabel;
   final int? oldPosition;
-  final int newPosition;
+  final int? newPosition;
   final int positionChange;
   final DateTime createdAt;
   final bool isFirst;
@@ -327,9 +328,11 @@ class _TimelineEntry extends StatelessWidget {
                             ),
                             const SizedBox(height: 2),
                             Text(
-                              oldPosition != null
-                                  ? '#$oldPosition → #$newPosition'
-                                  : 'Posição: #$newPosition',
+                              newPosition == null
+                                  ? '#$oldPosition → Fora'
+                                  : oldPosition != null
+                                      ? '#$oldPosition → #$newPosition'
+                                      : 'Posição: #$newPosition',
                               style: Theme.of(context)
                                   .textTheme
                                   .bodySmall

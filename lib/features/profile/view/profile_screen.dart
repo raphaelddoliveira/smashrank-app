@@ -3,11 +3,14 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/constants/route_names.dart';
+import '../../../core/errors/app_exception.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../shared/models/club_member_model.dart';
 import '../../../features/auth/data/auth_repository.dart';
 import '../../../shared/providers/current_player_provider.dart';
 import '../../clubs/view/club_selector_widget.dart';
 import '../../clubs/viewmodel/club_providers.dart';
+import '../../ranking/viewmodel/ranking_list_viewmodel.dart';
 import 'widgets/profile_header.dart';
 import 'widgets/stats_card.dart';
 
@@ -143,6 +146,8 @@ class ProfileScreen extends ConsumerWidget {
                       subtitle: 'Você está em pausa no ranking',
                       color: AppColors.ambulanceActive,
                     ),
+                  const SizedBox(height: 8),
+                  _RankingToggleCard(member: member),
                 ],
 
                 // Clubs section
@@ -218,5 +223,95 @@ class ProfileScreen extends ConsumerWidget {
         subtitle: Text(subtitle),
       ),
     );
+  }
+}
+
+class _RankingToggleCard extends ConsumerWidget {
+  final ClubMemberModel member;
+
+  const _RankingToggleCard({required this.member});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final actionState = ref.watch(rankingActionProvider);
+    final isLoading = actionState is AsyncLoading;
+
+    return Card(
+      child: SwitchListTile(
+        secondary: Icon(
+          Icons.leaderboard,
+          color: member.isInRanking ? AppColors.primary : AppColors.onBackgroundLight,
+        ),
+        title: const Text('Participar do Ranking'),
+        subtitle: Text(
+          member.isInRanking
+              ? 'Posição atual: #${member.rankingPosition}'
+              : 'Você está fora do ranking',
+        ),
+        value: member.rankingOptIn,
+        onChanged: isLoading
+            ? null
+            : (value) => _onToggle(context, ref, value),
+      ),
+    );
+  }
+
+  Future<void> _onToggle(BuildContext context, WidgetRef ref, bool optIn) async {
+    // Confirmation dialog when opting out
+    if (!optIn) {
+      final confirmed = await showDialog<bool>(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          title: const Text('Sair do Ranking'),
+          content: const Text(
+            'Ao sair do ranking, seus desafios ativos serão cancelados automaticamente. '
+            'Deseja continuar?',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: const Text('Cancelar'),
+            ),
+            TextButton(
+              onPressed: () => Navigator.pop(ctx, true),
+              child: const Text('Sair do Ranking'),
+            ),
+          ],
+        ),
+      );
+      if (confirmed != true) return;
+    }
+
+    final clubId = ref.read(currentClubIdProvider);
+    final sportId = ref.read(currentSportIdProvider);
+    if (clubId == null || sportId == null) return;
+
+    final success = await ref.read(rankingActionProvider.notifier).toggleParticipation(
+      clubId: clubId,
+      sportId: sportId,
+      optIn: optIn,
+    );
+
+    if (success) {
+      ref.invalidate(currentClubMemberProvider);
+      ref.invalidate(rankingListProvider);
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(optIn ? 'Você entrou no ranking!' : 'Você saiu do ranking.'),
+          ),
+        );
+      }
+    } else {
+      if (context.mounted) {
+        final error = ref.read(rankingActionProvider);
+        final message = error is AsyncError && error.error is AppException
+            ? (error.error as AppException).message
+            : 'Erro ao alterar participação no ranking';
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(message)),
+        );
+      }
+    }
   }
 }

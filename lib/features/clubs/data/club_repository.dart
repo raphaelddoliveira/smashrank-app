@@ -144,7 +144,7 @@ class ClubRepository {
       await _client.rpc('approve_join_request', params: {
         'p_request_id': requestId,
         'p_admin_auth_id': adminAuthId,
-        if (sportIds != null) 'p_sport_ids': sportIds,
+        'p_sport_ids': sportIds,
       });
     } catch (e) {
       throw ErrorHandler.handle(e);
@@ -163,13 +163,21 @@ class ClubRepository {
     }
   }
 
-  /// Update member role (promote/demote)
+  /// Update member role (promote/demote) — updates ALL sport rows for this player
   Future<void> updateMemberRole(String memberId, String role) async {
     try {
+      // Get club_id and player_id from the member row
+      final member = await _client
+          .from('club_members')
+          .select('club_id, player_id')
+          .eq('id', memberId)
+          .single();
+      // Update ALL rows for this player in this club (all sports)
       await _client
           .from('club_members')
           .update({'role': role})
-          .eq('id', memberId);
+          .eq('club_id', member['club_id'])
+          .eq('player_id', member['player_id']);
     } catch (e) {
       throw ErrorHandler.handle(e);
     }
@@ -417,6 +425,7 @@ class ClubRepository {
     required bool ruleAmbulanceEnabled,
     required bool ruleCooldownEnabled,
     required bool rulePositionGapEnabled,
+    required bool ruleResultDelayEnabled,
   }) async {
     try {
       await _client
@@ -425,6 +434,7 @@ class ClubRepository {
             'rule_ambulance_enabled': ruleAmbulanceEnabled,
             'rule_cooldown_enabled': ruleCooldownEnabled,
             'rule_position_gap_enabled': rulePositionGapEnabled,
+            'rule_result_delay_enabled': ruleResultDelayEnabled,
           })
           .eq('club_id', clubId)
           .eq('sport_id', sportId);

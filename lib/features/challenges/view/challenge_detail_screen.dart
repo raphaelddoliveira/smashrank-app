@@ -10,6 +10,7 @@ import '../../../shared/models/challenge_model.dart';
 import '../../../shared/models/enums.dart';
 import '../../../shared/providers/current_player_provider.dart';
 import '../../clubs/viewmodel/club_providers.dart';
+import '../../courts/viewmodel/reservation_viewmodel.dart';
 import '../viewmodel/challenge_detail_viewmodel.dart';
 import '../viewmodel/challenge_list_viewmodel.dart';
 import '../viewmodel/h2h_viewmodel.dart';
@@ -504,26 +505,72 @@ class _ChallengeDetailBody extends ConsumerWidget {
             ),
           );
         }
+        actions.add(const SizedBox(height: 8));
+        actions.add(
+          OutlinedButton.icon(
+            onPressed: () => _confirmCancel(context, ref),
+            icon: const Icon(Icons.close, color: AppColors.error),
+            label: const Text('Cancelar Desafio',
+                style: TextStyle(color: AppColors.error)),
+          ),
+        );
         break;
 
       case ChallengeStatus.scheduled:
-        actions.add(
-          ElevatedButton.icon(
-            onPressed: () {
-              context.push(
-                '/challenges/$challengeId/record-result',
-                extra: {
-                  'challengerId': challenge.challengerId,
-                  'challengedId': challenge.challengedId,
-                  'challengerName': challenge.challengerName ?? 'Desafiante',
-                  'challengedName': challenge.challengedName ?? 'Desafiado',
-                },
-              );
-            },
-            icon: const Icon(Icons.scoreboard),
-            label: const Text('Registrar Resultado'),
-          ),
-        );
+        // Check result delay rule
+        final clubSports = ref.watch(clubSportsProvider).valueOrNull ?? [];
+        final clubSport = clubSports.where((cs) => cs.sportId == challenge.sportId).firstOrNull;
+        final ruleDelayEnabled = clubSport?.ruleResultDelayEnabled ?? true;
+        final chosenDate = challenge.chosenDate;
+        final delayBlocked = ruleDelayEnabled &&
+            chosenDate != null &&
+            DateTime.now().isBefore(chosenDate.add(const Duration(minutes: 40)));
+
+        if (delayBlocked) {
+          final unlockTime = chosenDate.add(const Duration(minutes: 40));
+          final diff = unlockTime.difference(DateTime.now());
+          final hours = diff.inHours;
+          final mins = diff.inMinutes.remainder(60);
+          final timeLeft = hours > 0 ? '${hours}h ${mins}min' : '${mins}min';
+
+          actions.add(
+            Card(
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Row(
+                  children: [
+                    Icon(Icons.timer, color: AppColors.warning),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        'Resultado disponível em $timeLeft (40 min após o horário agendado).',
+                        style: const TextStyle(fontSize: 13),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          );
+        } else {
+          actions.add(
+            ElevatedButton.icon(
+              onPressed: () {
+                context.push(
+                  '/challenges/$challengeId/record-result',
+                  extra: {
+                    'challengerId': challenge.challengerId,
+                    'challengedId': challenge.challengedId,
+                    'challengerName': challenge.challengerName ?? 'Desafiante',
+                    'challengedName': challenge.challengedName ?? 'Desafiado',
+                  },
+                );
+              },
+              icon: const Icon(Icons.scoreboard),
+              label: const Text('Registrar Resultado'),
+            ),
+          );
+        }
         actions.add(const SizedBox(height: 8));
         actions.add(
           OutlinedButton.icon(
@@ -535,6 +582,119 @@ class _ChallengeDetailBody extends ConsumerWidget {
             ),
           ),
         );
+        actions.add(const SizedBox(height: 8));
+        actions.add(
+          OutlinedButton.icon(
+            onPressed: () => _confirmCancel(context, ref),
+            icon: const Icon(Icons.close, color: AppColors.error),
+            label: const Text('Cancelar Desafio',
+                style: TextStyle(color: AppColors.error)),
+          ),
+        );
+        break;
+
+      case ChallengeStatus.pendingResult:
+        final currentPlayerId = ref.watch(currentPlayerProvider).valueOrNull?.id;
+        final isSubmitter = currentPlayerId != null && challenge.isResultSubmitter(currentPlayerId);
+
+        if (isSubmitter) {
+          // Who submitted: waiting for opponent confirmation
+          actions.add(
+            Card(
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Row(
+                  children: [
+                    Icon(Icons.hourglass_top, color: AppColors.warning),
+                    const SizedBox(width: 12),
+                    const Expanded(
+                      child: Text(
+                        'Aguardando seu oponente confirmar o resultado.',
+                        style: TextStyle(fontSize: 13),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          );
+        } else {
+          // Opponent: can confirm or dispute
+          actions.add(
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton.icon(
+                onPressed: () => _confirmResultAction(context, ref),
+                icon: const Icon(Icons.check),
+                label: const Text('Confirmar Resultado'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.success,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                ),
+              ),
+            ),
+          );
+          actions.add(const SizedBox(height: 8));
+          actions.add(
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton.icon(
+                onPressed: () => _disputeResultAction(context, ref),
+                icon: const Icon(Icons.close, color: AppColors.error),
+                label: const Text('Contestar Resultado',
+                    style: TextStyle(color: AppColors.error)),
+              ),
+            ),
+          );
+        }
+        actions.add(const SizedBox(height: 8));
+        actions.add(
+          OutlinedButton.icon(
+            onPressed: () => _confirmCancel(context, ref),
+            icon: const Icon(Icons.close, color: AppColors.error),
+            label: const Text('Cancelar Desafio',
+                style: TextStyle(color: AppColors.error)),
+          ),
+        );
+        break;
+
+      case ChallengeStatus.completed:
+      case ChallengeStatus.woChallenger:
+      case ChallengeStatus.woChallenged:
+        final isAdmin = ref.watch(isClubAdminProvider);
+        if (isAdmin) {
+          actions.add(
+            OutlinedButton.icon(
+              onPressed: () => _confirmAnnul(context, ref),
+              icon: const Icon(Icons.gavel, color: AppColors.error),
+              label: const Text('Anular Desafio',
+                  style: TextStyle(color: AppColors.error)),
+            ),
+          );
+          if (challenge.status == ChallengeStatus.completed) {
+            actions.add(const SizedBox(height: 8));
+            actions.add(
+              OutlinedButton.icon(
+                onPressed: () {
+                  context.push(
+                    '/challenges/$challengeId/record-result',
+                    extra: {
+                      'challengerId': challenge.challengerId,
+                      'challengedId': challenge.challengedId,
+                      'challengerName': challenge.challengerName ?? 'Desafiante',
+                      'challengedName': challenge.challengedName ?? 'Desafiado',
+                      'isAdminEdit': true,
+                    },
+                  );
+                },
+                icon: Icon(Icons.edit, color: AppColors.warning),
+                label: Text('Editar Resultado',
+                    style: TextStyle(color: AppColors.warning)),
+              ),
+            );
+          }
+        }
         break;
 
       default:
@@ -542,6 +702,44 @@ class _ChallengeDetailBody extends ConsumerWidget {
     }
 
     return actions;
+  }
+
+  void _confirmAnnul(BuildContext context, WidgetRef ref) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Anular Desafio'),
+        content: const Text(
+          'Tem certeza que deseja anular este desafio?\n\n'
+          'O ranking será revertido e o resultado será apagado.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: const Text('Cancelar'),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.error,
+            ),
+            onPressed: () async {
+              Navigator.of(ctx).pop();
+              final success = await ref
+                  .read(challengeActionProvider.notifier)
+                  .annulChallenge(challengeId);
+              if (success && context.mounted) {
+                SnackbarUtils.showSuccess(
+                    context, 'Desafio anulado. Ranking revertido.');
+                ref.invalidate(challengeDetailProvider(challengeId));
+                ref.invalidate(activeChallengesProvider);
+                ref.invalidate(challengeHistoryProvider);
+              }
+            },
+            child: const Text('Anular'),
+          ),
+        ],
+      ),
+    );
   }
 
   void _confirmAccept(BuildContext context, WidgetRef ref) {
@@ -672,9 +870,84 @@ class _ChallengeDetailBody extends ConsumerWidget {
                 SnackbarUtils.showSuccess(context, 'Desafio cancelado');
                 ref.invalidate(challengeDetailProvider(challengeId));
                 ref.invalidate(activeChallengesProvider);
+                ref.invalidate(myReservationsProvider);
+                ref.invalidate(hasActiveFriendlyReservationProvider);
               }
             },
             child: const Text('Cancelar Desafio'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _confirmResultAction(BuildContext context, WidgetRef ref) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Confirmar Resultado'),
+        content: const Text('Confirma que o resultado registrado está correto?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: const Text('Cancelar'),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.success,
+              foregroundColor: Colors.white,
+            ),
+            onPressed: () async {
+              Navigator.of(ctx).pop();
+              final success = await ref
+                  .read(challengeActionProvider.notifier)
+                  .confirmResult(challengeId);
+              if (success && context.mounted) {
+                SnackbarUtils.showSuccess(context, 'Resultado confirmado!');
+                ref.invalidate(challengeDetailProvider(challengeId));
+                ref.invalidate(challengeMatchProvider(challengeId));
+                ref.invalidate(activeChallengesProvider);
+                ref.invalidate(challengeHistoryProvider);
+              }
+            },
+            child: const Text('Confirmar'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _disputeResultAction(BuildContext context, WidgetRef ref) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Contestar Resultado'),
+        content: const Text(
+          'O resultado será removido e seu oponente poderá corrigir e registrar novamente.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: const Text('Cancelar'),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.error,
+              foregroundColor: Colors.white,
+            ),
+            onPressed: () async {
+              Navigator.of(ctx).pop();
+              final success = await ref
+                  .read(challengeActionProvider.notifier)
+                  .disputeResult(challengeId);
+              if (success && context.mounted) {
+                SnackbarUtils.showSuccess(context, 'Resultado contestado');
+                ref.invalidate(challengeDetailProvider(challengeId));
+                ref.invalidate(challengeMatchProvider(challengeId));
+                ref.invalidate(activeChallengesProvider);
+              }
+            },
+            child: const Text('Contestar'),
           ),
         ],
       ),
@@ -755,11 +1028,13 @@ class _StatusChip extends StatelessWidget {
       ChallengeStatus.pending => 'Aguardando agendamento',
       ChallengeStatus.datesProposed => 'Aguardando confirmação',
       ChallengeStatus.scheduled => 'Agendado',
+      ChallengeStatus.pendingResult => 'Aguardando confirmação do resultado',
       ChallengeStatus.completed => 'Finalizado',
       ChallengeStatus.woChallenger => 'WO Desafiante',
       ChallengeStatus.woChallenged => 'WO Desafiado',
       ChallengeStatus.expired => 'Expirado',
       ChallengeStatus.cancelled => 'Cancelado',
+      ChallengeStatus.annulled => 'Anulado',
     };
 
     return Container(

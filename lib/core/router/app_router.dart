@@ -122,6 +122,8 @@ final appRouterProvider = Provider<GoRouter>((ref) {
                             extra['challengerName'] as String? ?? 'Desafiante',
                         challengedName:
                             extra['challengedName'] as String? ?? 'Desafiado',
+                        isAdminEdit:
+                            extra['isAdminEdit'] as bool? ?? false,
                       );
                     },
                   ),

@@ -17,6 +17,7 @@ class ChallengeModel {
   final String? winnerId;
   final String? loserId;
   final String? woPlayerId;
+  final String? resultSubmittedBy;
   final DateTime challengedAt;
   final DateTime? responseDeadline;
   final DateTime? datesProposedAt;
@@ -52,6 +53,7 @@ class ChallengeModel {
     this.winnerId,
     this.loserId,
     this.woPlayerId,
+    this.resultSubmittedBy,
     required this.challengedAt,
     this.responseDeadline,
     this.datesProposedAt,
@@ -84,15 +86,19 @@ class ChallengeModel {
   bool didWin(String playerId) => winnerId == playerId;
   bool didLose(String playerId) => loserId == playerId;
 
+  bool isResultSubmitter(String playerId) => resultSubmittedBy == playerId;
+
   String get statusLabel => switch (status) {
         ChallengeStatus.pending => 'Aguardando agendamento',
         ChallengeStatus.datesProposed => 'Aguardando confirmação',
         ChallengeStatus.scheduled => 'Agendado',
+        ChallengeStatus.pendingResult => 'Aguardando confirmação do resultado',
         ChallengeStatus.completed => 'Finalizado',
         ChallengeStatus.woChallenger => 'WO Desafiante',
         ChallengeStatus.woChallenged => 'WO Desafiado',
         ChallengeStatus.expired => 'Expirado',
         ChallengeStatus.cancelled => 'Cancelado',
+        ChallengeStatus.annulled => 'Anulado',
       };
 
   List<DateTime> get proposedDates => [
@@ -150,6 +156,7 @@ class ChallengeModel {
       winnerId: json['winner_id'] as String?,
       loserId: json['loser_id'] as String?,
       woPlayerId: json['wo_player_id'] as String?,
+      resultSubmittedBy: json['result_submitted_by'] as String?,
       challengedAt: DateTime.parse(json['challenged_at'] as String),
       responseDeadline: json['response_deadline'] != null
           ? DateTime.parse(json['response_deadline'] as String)

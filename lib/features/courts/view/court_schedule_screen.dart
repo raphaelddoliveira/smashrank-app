@@ -10,6 +10,8 @@ import '../../../shared/models/reservation_model.dart';
 import '../../../shared/models/time_slot.dart';
 import '../../../shared/providers/current_player_provider.dart';
 import '../../../shared/utils/slot_generator.dart';
+import '../../challenges/viewmodel/challenge_detail_viewmodel.dart';
+import '../../challenges/viewmodel/challenge_list_viewmodel.dart';
 import '../../clubs/viewmodel/club_providers.dart';
 import '../data/court_repository.dart';
 import '../viewmodel/reservation_viewmodel.dart';
@@ -386,13 +388,18 @@ class _CourtScheduleScreenState extends ConsumerState<CourtScheduleScreen> {
   }
 
   void _confirmCancelFromSchedule(ReservationModel reservation) {
+    final isChallenge = reservation.isChallenge;
+    final message = isChallenge
+        ? 'Esta reserva está vinculada a um desafio. '
+            'Ao cancelar a reserva, o desafio também será cancelado. '
+            'Deseja continuar?'
+        : 'Cancelar sua reserva das ${reservation.timeRange}?';
+
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Cancelar Reserva'),
-        content: Text(
-          'Cancelar sua reserva das ${reservation.timeRange}?',
-        ),
+        title: Text(isChallenge ? 'Cancelar Reserva e Desafio' : 'Cancelar Reserva'),
+        content: Text(message),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(),
@@ -405,27 +412,54 @@ class _CourtScheduleScreenState extends ConsumerState<CourtScheduleScreen> {
               final success = await ref
                   .read(reservationActionProvider.notifier)
                   .cancelReservation(reservation.id);
+
+              if (success && isChallenge) {
+                await ref
+                    .read(challengeActionProvider.notifier)
+                    .cancelChallenge(reservation.challengeId!);
+              }
+
               if (mounted) {
                 if (success) {
-                  SnackbarUtils.showSuccess(context, 'Reserva cancelada');
+                  SnackbarUtils.showSuccess(
+                    context,
+                    isChallenge
+                        ? 'Reserva e desafio cancelados'
+                        : 'Reserva cancelada',
+                  );
                   ref.invalidate(courtReservationsProvider(
                     (courtId: widget.courtId, date: _selectedDate),
                   ));
                   ref.invalidate(myReservationsProvider);
                   ref.invalidate(hasActiveFriendlyReservationProvider);
+                  if (isChallenge) {
+                    ref.invalidate(activeChallengesProvider);
+                  }
                 } else {
                   SnackbarUtils.showError(context, 'Erro ao cancelar reserva');
                 }
               }
             },
-            child: const Text('Cancelar Reserva'),
+            child: Text(isChallenge ? 'Cancelar Ambos' : 'Cancelar Reserva'),
           ),
         ],
       ),
     );
   }
 
-  void _confirmApply(ReservationModel reservation) {
+  void _confirmApply(ReservationModel reservation) async {
+    // Check if player already has an active friendly reservation
+    final hasFriendly =
+        await ref.read(hasActiveFriendlyReservationProvider.future);
+    if (hasFriendly && mounted) {
+      SnackbarUtils.showError(
+        context,
+        'Você já tem uma reserva amistosa ativa. Cancele ou conclua antes de se candidatar.',
+      );
+      return;
+    }
+    if (!mounted) return;
+
     final ownerName = reservation.playerName ?? 'Jogador';
     showDialog(
       context: context,

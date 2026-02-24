@@ -238,6 +238,7 @@ class ClubSportModel {
   final bool ruleAmbulanceEnabled;
   final bool ruleCooldownEnabled;
   final bool rulePositionGapEnabled;
+  final bool ruleResultDelayEnabled;
 
   const ClubSportModel({
     required this.id,
@@ -249,6 +250,7 @@ class ClubSportModel {
     this.ruleAmbulanceEnabled = true,
     this.ruleCooldownEnabled = true,
     this.rulePositionGapEnabled = true,
+    this.ruleResultDelayEnabled = true,
   });
 
   factory ClubSportModel.fromJson(Map<String, dynamic> json) {
@@ -264,6 +266,7 @@ class ClubSportModel {
       ruleAmbulanceEnabled: json['rule_ambulance_enabled'] as bool? ?? true,
       ruleCooldownEnabled: json['rule_cooldown_enabled'] as bool? ?? true,
       rulePositionGapEnabled: json['rule_position_gap_enabled'] as bool? ?? true,
+      ruleResultDelayEnabled: json['rule_result_delay_enabled'] as bool? ?? true,
     );
   }
 }

@@ -175,6 +175,8 @@ class _NotificationTile extends ConsumerWidget {
       case NotificationType.general:
         if (challengeId != null) {
           context.push('/challenges/$challengeId');
+        } else if (notification.clubId != null) {
+          context.push('/clubs/${notification.clubId}/manage');
         }
     }
   }

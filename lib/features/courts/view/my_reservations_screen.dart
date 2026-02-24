@@ -7,6 +7,8 @@ import '../../../shared/models/club_member_model.dart';
 import '../../../shared/models/enums.dart';
 import '../../../shared/models/reservation_model.dart';
 import '../../../shared/providers/current_player_provider.dart';
+import '../../challenges/viewmodel/challenge_detail_viewmodel.dart';
+import '../../challenges/viewmodel/challenge_list_viewmodel.dart';
 import '../../clubs/viewmodel/club_providers.dart';
 import '../viewmodel/reservation_viewmodel.dart';
 
@@ -297,14 +299,19 @@ class _ReservationCard extends ConsumerWidget {
     WidgetRef ref,
     ReservationModel reservation,
   ) {
+    final isChallenge = reservation.isChallenge;
+    final message = isChallenge
+        ? 'Esta reserva está vinculada a um desafio. '
+            'Ao cancelar a reserva, o desafio também será cancelado. '
+            'Deseja continuar?'
+        : 'Cancelar reserva de ${reservation.courtName ?? 'local'} '
+            'em ${reservation.formattedDate} das ${reservation.timeRange}?';
+
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Cancelar Reserva'),
-        content: Text(
-          'Cancelar reserva de ${reservation.courtName ?? 'local'} '
-          'em ${reservation.formattedDate} das ${reservation.timeRange}?',
-        ),
+        title: Text(isChallenge ? 'Cancelar Reserva e Desafio' : 'Cancelar Reserva'),
+        content: Text(message),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(),
@@ -320,18 +327,32 @@ class _ReservationCard extends ConsumerWidget {
                   .read(reservationActionProvider.notifier)
                   .cancelReservation(reservation.id);
 
+              if (success && isChallenge) {
+                await ref
+                    .read(challengeActionProvider.notifier)
+                    .cancelChallenge(reservation.challengeId!);
+              }
+
               if (context.mounted) {
                 if (success) {
-                  SnackbarUtils.showSuccess(context, 'Reserva cancelada');
+                  SnackbarUtils.showSuccess(
+                    context,
+                    isChallenge
+                        ? 'Reserva e desafio cancelados'
+                        : 'Reserva cancelada',
+                  );
                   ref.invalidate(myReservationsProvider);
                   ref.invalidate(hasActiveFriendlyReservationProvider);
+                  if (isChallenge) {
+                    ref.invalidate(activeChallengesProvider);
+                  }
                 } else {
                   SnackbarUtils.showError(
                       context, 'Erro ao cancelar reserva');
                 }
               }
             },
-            child: const Text('Cancelar Reserva'),
+            child: Text(isChallenge ? 'Cancelar Ambos' : 'Cancelar Reserva'),
           ),
         ],
       ),

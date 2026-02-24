@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../core/constants/supabase_constants.dart';
+import '../../../core/errors/app_exception.dart';
 import '../../../core/errors/error_handler.dart';
 import '../../../services/supabase_service.dart';
 import '../../../shared/models/court_model.dart';
@@ -294,6 +295,7 @@ class CourtRepository {
   }
 
   /// Count active friendly (non-challenge) reservations for current player
+  /// Includes reservations where player is owner OR opponent
   Future<int> getActiveFriendlyReservationCount() async {
     try {
       final playerId = await _getCurrentPlayerId();
@@ -303,11 +305,31 @@ class CourtRepository {
       final data = await _client
           .from(SupabaseConstants.courtReservationsTable)
           .select('id')
-          .eq('reserved_by', playerId)
+          .or('reserved_by.eq.$playerId,opponent_id.eq.$playerId')
           .eq('status', 'confirmed')
           .isFilter('challenge_id', null)
           .gte('reservation_date', dateStr);
       return data.length;
+    } catch (e) {
+      throw ErrorHandler.handle(e);
+    }
+  }
+
+  /// Check if a specific player has an active friendly reservation
+  Future<bool> playerHasActiveFriendlyReservation(String playerId) async {
+    try {
+      final today = DateTime.now();
+      final dateStr =
+          '${today.year}-${today.month.toString().padLeft(2, '0')}-${today.day.toString().padLeft(2, '0')}';
+      final data = await _client
+          .from(SupabaseConstants.courtReservationsTable)
+          .select('id')
+          .or('reserved_by.eq.$playerId,opponent_id.eq.$playerId')
+          .eq('status', 'confirmed')
+          .isFilter('challenge_id', null)
+          .gte('reservation_date', dateStr)
+          .limit(1);
+      return data.isNotEmpty;
     } catch (e) {
       throw ErrorHandler.handle(e);
     }
@@ -321,6 +343,18 @@ class CourtRepository {
     String? opponentName,
   }) async {
     try {
+      // If adding a member as opponent, check if they already have a reservation
+      if (opponentId != null && opponentType == OpponentType.member) {
+        final hasReservation =
+            await playerHasActiveFriendlyReservation(opponentId);
+        if (hasReservation) {
+          throw const ValidationException(
+            'Este jogador já tem uma reserva amistosa ativa.',
+            code: 'OPPONENT_HAS_RESERVATION',
+          );
+        }
+      }
+
       await _client
           .from(SupabaseConstants.courtReservationsTable)
           .update({
@@ -388,6 +422,16 @@ class CourtRepository {
 
       final candidateId = res['candidate_id'] as String?;
       if (candidateId == null) return;
+
+      // Check if candidate already has an active friendly reservation
+      final candidateHasReservation =
+          await playerHasActiveFriendlyReservation(candidateId);
+      if (candidateHasReservation) {
+        throw const ValidationException(
+          'Este jogador já tem uma reserva amistosa ativa e não pode ser adicionado.',
+          code: 'CANDIDATE_HAS_RESERVATION',
+        );
+      }
 
       // Get candidate name for opponent_name
       final candidateData = await _client

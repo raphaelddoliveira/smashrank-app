@@ -3,7 +3,7 @@ class RankingHistoryModel {
   final String playerId;
   final String? sportId;
   final int? oldPosition;
-  final int newPosition;
+  final int? newPosition;
   final String reason;
   final String? referenceId;
   final DateTime createdAt;
@@ -13,17 +13,19 @@ class RankingHistoryModel {
     required this.playerId,
     this.sportId,
     this.oldPosition,
-    required this.newPosition,
+    this.newPosition,
     required this.reason,
     this.referenceId,
     required this.createdAt,
   });
 
   int get positionChange {
-    if (oldPosition == null) return 0;
-    return oldPosition! - newPosition;
+    if (oldPosition == null || newPosition == null) return 0;
+    return oldPosition! - newPosition!;
   }
 
+  bool get isOptOut => reason == 'ranking_opt_out';
+  bool get isOptIn => reason == 'ranking_opt_in';
   bool get isImprovement => positionChange > 0;
   bool get isDecline => positionChange < 0;
   bool get isUnchanged => positionChange == 0;
@@ -37,6 +39,8 @@ class RankingHistoryModel {
         'monthly_inactivity' => 'Inatividade mensal',
         'admin_adjustment' => 'Ajuste administrativo',
         'new_player' => 'Novo jogador',
+        'ranking_opt_out' => 'Saiu do ranking',
+        'ranking_opt_in' => 'Entrou no ranking',
         _ => reason,
       };
 
@@ -46,7 +50,7 @@ class RankingHistoryModel {
       playerId: json['player_id'] as String,
       sportId: json['sport_id'] as String?,
       oldPosition: json['old_position'] as int?,
-      newPosition: json['new_position'] as int,
+      newPosition: json['new_position'] as int?,
       reason: json['reason'] as String,
       referenceId: json['reference_id'] as String?,
       createdAt: DateTime.parse(json['created_at'] as String),

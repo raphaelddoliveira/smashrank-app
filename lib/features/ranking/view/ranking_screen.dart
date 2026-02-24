@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+import '../../../core/errors/app_exception.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../shared/models/club_member_model.dart';
 import '../../../shared/providers/current_player_provider.dart';
@@ -30,16 +31,85 @@ class _RankingScreenState extends ConsumerState<RankingScreen> {
     super.dispose();
   }
 
+  Future<void> _confirmOptOut(BuildContext context, WidgetRef ref) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Sair do Ranking'),
+        content: const Text(
+          'Ao sair do ranking, seus desafios ativos serão cancelados automaticamente. '
+          'Deseja continuar?',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Cancelar'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Sair do Ranking'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !context.mounted) return;
+    await _toggleRanking(context, ref, false);
+  }
+
+  Future<void> _activateRanking(BuildContext context, WidgetRef ref) async {
+    await _toggleRanking(context, ref, true);
+  }
+
+  Future<void> _toggleRanking(BuildContext context, WidgetRef ref, bool optIn) async {
+    final clubId = ref.read(currentClubIdProvider);
+    final sportId = ref.read(currentSportIdProvider);
+    if (clubId == null || sportId == null) return;
+
+    final success = await ref.read(rankingActionProvider.notifier).toggleParticipation(
+      clubId: clubId,
+      sportId: sportId,
+      optIn: optIn,
+    );
+
+    if (!context.mounted) return;
+
+    if (success) {
+      ref.invalidate(currentClubMemberProvider);
+      ref.invalidate(rankingListProvider);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(optIn ? 'Você entrou no ranking!' : 'Você saiu do ranking.'),
+        ),
+      );
+    } else {
+      final error = ref.read(rankingActionProvider);
+      final message = error is AsyncError && error.error is AppException
+          ? (error.error as AppException).message
+          : 'Erro ao alterar participação no ranking';
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(message)),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final clubId = ref.watch(currentClubIdProvider);
     final rankingAsync = ref.watch(rankingListProvider);
+    final currentMember = ref.watch(currentClubMemberProvider).valueOrNull;
+    final isOptedOut = currentMember != null && !currentMember.isInRanking;
 
     return Scaffold(
       appBar: AppBar(
         title: clubAppBarTitle('SmashRank', context, ref),
         centerTitle: true,
         actions: [
+          if (currentMember != null && currentMember.isInRanking)
+            IconButton(
+              icon: const Icon(Icons.person_remove_outlined, size: 22),
+              onPressed: () => _confirmOptOut(context, ref),
+              tooltip: 'Sair do ranking',
+            ),
           IconButton(
             icon: const Icon(Icons.refresh),
             onPressed: () => ref.invalidate(rankingListProvider),
@@ -143,6 +213,50 @@ class _RankingScreenState extends ConsumerState<RankingScreen> {
                               : const SizedBox.shrink(),
                         ),
                       ),
+
+                      // Opt-out banner
+                      if (isOptedOut)
+                        SliverToBoxAdapter(
+                          child: Container(
+                            margin: const EdgeInsets.fromLTRB(12, 12, 12, 0),
+                            padding: const EdgeInsets.all(16),
+                            decoration: BoxDecoration(
+                              color: AppColors.warning.withAlpha(25),
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(color: AppColors.warning.withAlpha(80)),
+                            ),
+                            child: Row(
+                              children: [
+                                const Icon(Icons.info_outline, color: AppColors.warning),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      const Text(
+                                        'Você não está no ranking',
+                                        style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
+                                      ),
+                                      const SizedBox(height: 4),
+                                      const Text(
+                                        'Ative sua participação para desafiar outros jogadores.',
+                                        style: TextStyle(fontSize: 12, color: AppColors.onBackgroundMedium),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                FilledButton(
+                                  onPressed: () => _activateRanking(context, ref),
+                                  style: FilledButton.styleFrom(
+                                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                                  ),
+                                  child: const Text('Ativar'),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
 
                       // Search bar
                       SliverToBoxAdapter(

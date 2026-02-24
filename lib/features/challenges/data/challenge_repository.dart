@@ -54,7 +54,7 @@ class ChallengeRepository {
           .select(_selectWithJoins)
           .eq('club_id', clubId)
           .or('challenger_id.eq.$playerId,challenged_id.eq.$playerId')
-          .inFilter('status', ['pending', 'dates_proposed', 'scheduled']);
+          .inFilter('status', ['pending', 'dates_proposed', 'scheduled', 'pending_result']);
       if (sportId != null) {
         query = query.eq('sport_id', sportId);
       }
@@ -312,7 +312,7 @@ class ChallengeRepository {
     }
   }
 
-  /// Record match result via RPC
+  /// Submit match result (pending opponent confirmation)
   Future<void> recordResult({
     required String challengeId,
     required String winnerId,
@@ -323,10 +323,12 @@ class ChallengeRepository {
     bool superTiebreak = false,
   }) async {
     try {
+      final playerId = await _getCurrentPlayerId();
       await _client.rpc(
-        SupabaseConstants.rpcSwapRanking,
+        'submit_challenge_result',
         params: {
           'p_challenge_id': challengeId,
+          'p_submitter_id': playerId,
           'p_winner_id': winnerId,
           'p_loser_id': loserId,
           'p_sets': sets.map((s) => s.toJson()).toList(),
@@ -335,8 +337,40 @@ class ChallengeRepository {
           'p_super_tiebreak': superTiebreak,
         },
       );
+    } catch (e) {
+      throw ErrorHandler.handle(e);
+    }
+  }
+
+  /// Confirm match result (opponent confirms → ranking updates)
+  Future<void> confirmResult(String challengeId) async {
+    try {
+      final playerId = await _getCurrentPlayerId();
+      await _client.rpc(
+        'confirm_challenge_result',
+        params: {
+          'p_challenge_id': challengeId,
+          'p_confirmer_id': playerId,
+        },
+      );
       // Mark the linked court reservation as completed
       await _completeReservationForChallenge(challengeId);
+    } catch (e) {
+      throw ErrorHandler.handle(e);
+    }
+  }
+
+  /// Dispute match result (opponent contests → back to scheduled)
+  Future<void> disputeResult(String challengeId) async {
+    try {
+      final playerId = await _getCurrentPlayerId();
+      await _client.rpc(
+        'dispute_challenge_result',
+        params: {
+          'p_challenge_id': challengeId,
+          'p_disputer_id': playerId,
+        },
+      );
     } catch (e) {
       throw ErrorHandler.handle(e);
     }
@@ -379,7 +413,7 @@ class ChallengeRepository {
     }
   }
 
-  /// Cancel a challenge
+  /// Cancel a challenge (and its linked reservation, if any)
   Future<void> cancelChallenge(String challengeId) async {
     try {
       final playerId = await _getCurrentPlayerId();
@@ -389,6 +423,23 @@ class ChallengeRepository {
           .select('challenger_id, challenged_id, club_id')
           .eq('id', challengeId)
           .single();
+
+      // Cancel linked reservation(s)
+      final reservations = await _client
+          .from(SupabaseConstants.courtReservationsTable)
+          .select('id')
+          .eq('challenge_id', challengeId)
+          .eq('status', 'confirmed');
+
+      for (final r in reservations) {
+        await _client
+            .from(SupabaseConstants.courtReservationsTable)
+            .update({
+              'status': 'cancelled',
+              'updated_at': DateTime.now().toIso8601String(),
+            })
+            .eq('id', r['id']);
+      }
 
       await _client
           .from(SupabaseConstants.challengesTable)
@@ -410,6 +461,52 @@ class ChallengeRepository {
         'data': {'challenge_id': challengeId},
         'club_id': challenge['club_id'],
       });
+    } catch (e) {
+      throw ErrorHandler.handle(e);
+    }
+  }
+
+  /// Admin: annul a completed challenge (reverts ranking)
+  Future<void> annulChallenge(String challengeId) async {
+    try {
+      final playerId = await _getCurrentPlayerId();
+      await _client.rpc(
+        'admin_annul_challenge',
+        params: {
+          'p_challenge_id': challengeId,
+          'p_admin_id': playerId,
+        },
+      );
+    } catch (e) {
+      throw ErrorHandler.handle(e);
+    }
+  }
+
+  /// Admin: edit result of a completed challenge
+  Future<void> adminEditResult({
+    required String challengeId,
+    required String winnerId,
+    required String loserId,
+    required List<SetScore> sets,
+    required int winnerSets,
+    required int loserSets,
+    bool superTiebreak = false,
+  }) async {
+    try {
+      final playerId = await _getCurrentPlayerId();
+      await _client.rpc(
+        'admin_edit_challenge_result',
+        params: {
+          'p_challenge_id': challengeId,
+          'p_admin_id': playerId,
+          'p_new_winner_id': winnerId,
+          'p_new_loser_id': loserId,
+          'p_sets': sets.map((s) => s.toJson()).toList(),
+          'p_winner_sets': winnerSets,
+          'p_loser_sets': loserSets,
+          'p_super_tiebreak': superTiebreak,
+        },
+      );
     } catch (e) {
       throw ErrorHandler.handle(e);
     }

@@ -35,6 +35,24 @@ class RankingRepository {
     }
   }
 
+  Future<void> toggleRankingParticipation({
+    required String clubId,
+    required String sportId,
+    required bool optIn,
+  }) async {
+    try {
+      final authId = _client.auth.currentUser!.id;
+      await _client.rpc('toggle_ranking_participation', params: {
+        'p_auth_id': authId,
+        'p_club_id': clubId,
+        'p_sport_id': sportId,
+        'p_opt_in': optIn,
+      });
+    } catch (e) {
+      throw ErrorHandler.handle(e);
+    }
+  }
+
   Future<List<RankingHistoryModel>> getPlayerHistory(
     String playerId, {
     String? clubId,

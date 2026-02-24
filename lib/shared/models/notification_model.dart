@@ -42,6 +42,9 @@ class NotificationModel {
   /// Get the challenge_id from data if present (for navigation)
   String? get challengeId => data['challenge_id'] as String?;
 
+  /// Get the club_id from data if present (for navigation)
+  String? get clubId => data['club_id'] as String?;
+
   factory NotificationModel.fromJson(Map<String, dynamic> json) {
     return NotificationModel(
       id: json['id'] as String,

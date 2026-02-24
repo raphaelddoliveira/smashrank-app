@@ -23,15 +23,26 @@ class RankingChart extends StatelessWidget {
       );
     }
 
-    // Reverse so oldest is first (left side of chart)
-    final reversed = history.reversed.toList();
+    // Reverse so oldest is first (left side of chart), filter out opt-out entries
+    final reversed = history.reversed.where((e) => e.newPosition != null).toList();
+    if (reversed.length < 2) {
+      return const SizedBox(
+        height: 200,
+        child: Center(
+          child: Text(
+            'Histórico insuficiente para gerar gráfico',
+            style: TextStyle(color: AppColors.onBackgroundLight),
+          ),
+        ),
+      );
+    }
     final spots = <FlSpot>[];
     for (var i = 0; i < reversed.length; i++) {
-      spots.add(FlSpot(i.toDouble(), reversed[i].newPosition.toDouble()));
+      spots.add(FlSpot(i.toDouble(), reversed[i].newPosition!.toDouble()));
     }
 
     // Calculate bounds
-    final positions = reversed.map((e) => e.newPosition);
+    final positions = reversed.map((e) => e.newPosition!);
     final minPos = positions.reduce((a, b) => a < b ? a : b);
     final maxPos = positions.reduce((a, b) => a > b ? a : b);
     final padding = ((maxPos - minPos) * 0.2).clamp(1, 5).toDouble();
@@ -136,7 +147,7 @@ class RankingChart extends StatelessWidget {
                     if (index < 0 || index >= reversed.length) return null;
                     final entry = reversed[index];
                     return LineTooltipItem(
-                      '#${entry.newPosition}\n${entry.reasonLabel}',
+                      '#${entry.newPosition ?? '-'}\n${entry.reasonLabel}',
                       const TextStyle(
                         color: Colors.white,
                         fontSize: 12,

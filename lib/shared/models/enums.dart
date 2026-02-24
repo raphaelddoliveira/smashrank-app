@@ -29,11 +29,13 @@ enum ChallengeStatus {
   pending,
   datesProposed('dates_proposed'),
   scheduled,
+  pendingResult('pending_result'),
   completed,
   woChallenger('wo_challenger'),
   woChallenged('wo_challenged'),
   expired,
-  cancelled;
+  cancelled,
+  annulled;
 
   final String? _dbValue;
   const ChallengeStatus([this._dbValue]);
@@ -46,14 +48,18 @@ enum ChallengeStatus {
       );
 
   bool get isActive =>
-      this == pending || this == datesProposed || this == scheduled;
+      this == pending ||
+      this == datesProposed ||
+      this == scheduled ||
+      this == pendingResult;
 
   bool get isFinished =>
       this == completed ||
       this == woChallenger ||
       this == woChallenged ||
       this == expired ||
-      this == cancelled;
+      this == cancelled ||
+      this == annulled;
 }
 
 enum PaymentStatus {

@@ -15,6 +15,7 @@ class ClubMemberModel {
   final DateTime? ambulanceStartedAt;
   final DateTime? ambulanceProtectionUntil;
   final bool mustBeChallengedFirst;
+  final bool rankingOptIn;
   final ClubMemberStatus status;
   final DateTime joinedAt;
   final DateTime createdAt;
@@ -46,6 +47,7 @@ class ClubMemberModel {
     this.ambulanceStartedAt,
     this.ambulanceProtectionUntil,
     this.mustBeChallengedFirst = false,
+    this.rankingOptIn = true,
     this.status = ClubMemberStatus.active,
     required this.joinedAt,
     required this.createdAt,
@@ -71,6 +73,8 @@ class ClubMemberModel {
       challengedProtectionUntil!.isAfter(DateTime.now());
 
   bool get isOnAmbulance => ambulanceActive;
+
+  bool get isInRanking => rankingOptIn && rankingPosition != null;
 
   String get displayName => playerNickname ?? playerName;
 
@@ -105,6 +109,7 @@ class ClubMemberModel {
           ? DateTime.parse(json['ambulance_protection_until'] as String)
           : null,
       mustBeChallengedFirst: json['must_be_challenged_first'] as bool? ?? false,
+      rankingOptIn: json['ranking_opt_in'] as bool? ?? true,
       status: ClubMemberStatus.fromString(json['status'] as String),
       joinedAt: DateTime.parse(json['joined_at'] as String),
       createdAt: DateTime.parse(json['created_at'] as String),

@@ -16,6 +16,7 @@ class RecordResultScreen extends ConsumerStatefulWidget {
   final String challengedId;
   final String challengerName;
   final String challengedName;
+  final bool isAdminEdit;
 
   const RecordResultScreen({
     super.key,
@@ -24,6 +25,7 @@ class RecordResultScreen extends ConsumerStatefulWidget {
     required this.challengedId,
     required this.challengerName,
     required this.challengedName,
+    this.isAdminEdit = false,
   });
 
   @override
@@ -167,7 +169,7 @@ class _RecordResultScreenState extends ConsumerState<RecordResultScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Registrar Resultado'),
+        title: Text(widget.isAdminEdit ? 'Editar Resultado' : 'Registrar Resultado'),
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
@@ -268,7 +270,9 @@ class _RecordResultScreenState extends ConsumerState<RecordResultScreen> {
                       )
                     : const Icon(Icons.check_circle),
                 label: Text(
-                    _isSubmitting ? 'Registrando...' : 'Registrar Resultado'),
+                    _isSubmitting
+                        ? (widget.isAdminEdit ? 'Atualizando...' : 'Registrando...')
+                        : (widget.isAdminEdit ? 'Salvar Alteração' : 'Registrar Resultado')),
                 style: ElevatedButton.styleFrom(
                   padding: const EdgeInsets.symmetric(vertical: 14),
                 ),
@@ -1024,29 +1028,52 @@ class _RecordResultScreenState extends ConsumerState<RecordResultScreen> {
 
     setState(() => _isSubmitting = true);
 
-    final success =
-        await ref.read(challengeActionProvider.notifier).recordResult(
-              challengeId: widget.challengeId,
-              winnerId: winnerId,
-              loserId: loserId,
-              sets: validSets,
-              winnerSets: winnerSets,
-              loserSets: loserSets,
-              superTiebreak: isSuperTb,
-            );
+    final bool success;
+    if (widget.isAdminEdit) {
+      success =
+          await ref.read(challengeActionProvider.notifier).adminEditResult(
+                challengeId: widget.challengeId,
+                winnerId: winnerId,
+                loserId: loserId,
+                sets: validSets,
+                winnerSets: winnerSets,
+                loserSets: loserSets,
+                superTiebreak: isSuperTb,
+              );
+    } else {
+      success =
+          await ref.read(challengeActionProvider.notifier).recordResult(
+                challengeId: widget.challengeId,
+                winnerId: winnerId,
+                loserId: loserId,
+                sets: validSets,
+                winnerSets: winnerSets,
+                loserSets: loserSets,
+                superTiebreak: isSuperTb,
+              );
+    }
 
     if (!mounted) return;
     setState(() => _isSubmitting = false);
 
     if (success) {
-      SnackbarUtils.showSuccess(context, 'Resultado registrado!');
+      SnackbarUtils.showSuccess(
+          context,
+          widget.isAdminEdit
+              ? 'Resultado atualizado pelo admin.'
+              : 'Resultado enviado! Aguardando confirmação do oponente.');
       ref.invalidate(challengeDetailProvider(widget.challengeId));
       ref.invalidate(challengeMatchProvider(widget.challengeId));
       ref.invalidate(activeChallengesProvider);
-      ref.invalidate(challengeHistoryProvider);
+      if (widget.isAdminEdit) {
+        ref.invalidate(challengeHistoryProvider);
+      }
       context.pop();
     } else {
-      SnackbarUtils.showError(context, 'Erro ao registrar resultado');
+      SnackbarUtils.showError(context,
+          widget.isAdminEdit
+              ? 'Erro ao atualizar resultado'
+              : 'Erro ao registrar resultado');
     }
   }
 }

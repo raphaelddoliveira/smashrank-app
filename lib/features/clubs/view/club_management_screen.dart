@@ -12,6 +12,7 @@ import '../../../shared/models/sport_model.dart';
 import '../../../shared/providers/current_player_provider.dart';
 import '../../courts/data/court_repository.dart';
 import '../../courts/viewmodel/courts_viewmodel.dart';
+import '../../ranking/viewmodel/ranking_list_viewmodel.dart';
 import '../data/club_repository.dart';
 import '../viewmodel/club_providers.dart';
 
@@ -563,6 +564,7 @@ class _MembersSectionState extends ConsumerState<_MembersSection> {
                         await ref.read(clubRepositoryProvider)
                             .updateMemberRole(member.id, newRole);
                         ref.invalidate(clubMembersProvider(widget.clubId));
+                        ref.invalidate(currentClubMemberProvider);
                       }
                     : null,
                 onSuspend: widget.isAdmin && member.isActive
@@ -579,6 +581,7 @@ class _MembersSectionState extends ConsumerState<_MembersSection> {
                           await ref.read(clubRepositoryProvider)
                               .removeMember(member.id, player.authId);
                           ref.invalidate(clubMembersProvider(widget.clubId));
+                          ref.invalidate(rankingListProvider);
                           if (mounted) {
                             SnackbarUtils.showSuccess(context, 'Membro removido');
                           }
@@ -997,6 +1000,7 @@ class _SportsSection extends ConsumerWidget {
     bool ambulance = cs.ruleAmbulanceEnabled;
     bool cooldown = cs.ruleCooldownEnabled;
     bool positionGap = cs.rulePositionGapEnabled;
+    bool resultDelay = cs.ruleResultDelayEnabled;
 
     showModalBottomSheet(
       context: context,
@@ -1044,6 +1048,12 @@ class _SportsSection extends ConsumerWidget {
                   value: positionGap,
                   onChanged: (v) => setState(() => positionGap = v),
                 ),
+                SwitchListTile(
+                  title: const Text('Bloqueio de resultado antecipado'),
+                  subtitle: const Text('Só permite registrar resultado 40 min após o horário agendado'),
+                  value: resultDelay,
+                  onChanged: (v) => setState(() => resultDelay = v),
+                ),
                 const SizedBox(height: 16),
                 SizedBox(
                   width: double.infinity,
@@ -1057,6 +1067,7 @@ class _SportsSection extends ConsumerWidget {
                           ruleAmbulanceEnabled: ambulance,
                           ruleCooldownEnabled: cooldown,
                           rulePositionGapEnabled: positionGap,
+                          ruleResultDelayEnabled: resultDelay,
                         );
                         ref.invalidate(clubSportsProvider);
                         if (context.mounted) {
