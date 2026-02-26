@@ -54,6 +54,10 @@ dependencies:
   # Connectivity
   connectivity_plus: ^6.1.1
 
+  # Firebase (Web Push Notifications)
+  firebase_core: ^3.12.1
+  firebase_messaging: ^15.2.4
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

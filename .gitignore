@@ -53,3 +53,9 @@ app.*.map.json
 # Windows artifacts
 nul
 .vercel
+
+# FTP credentials
+.ftp-credentials
+
+# Firebase service account key
+*firebase-adminsdk*

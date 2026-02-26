@@ -6,6 +6,7 @@ import '../../core/constants/route_names.dart';
 import '../../core/theme/app_colors.dart';
 import '../../features/clubs/viewmodel/club_providers.dart';
 import '../../features/notifications/viewmodel/notification_viewmodel.dart';
+import '../../services/push_notification_service.dart';
 import '../providers/current_player_provider.dart';
 import 'floating_nav_bar.dart';
 
@@ -38,6 +39,8 @@ class AppScaffold extends ConsumerWidget {
 
     // Activate realtime listener for notifications
     ref.watch(notificationRealtimeProvider);
+    // Activate web push notifications
+    ref.watch(pushNotificationProvider);
     final isAdmin = currentPlayer.valueOrNull?.isAdmin ?? false;
     final bottomPadding = MediaQuery.of(context).viewPadding.bottom;
 

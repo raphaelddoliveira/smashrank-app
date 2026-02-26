@@ -35,6 +35,22 @@
   <!-- Image Cropper (web) — image_cropper_for_web uses Cropper.js -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.2/cropper.min.css" />
   <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.2/cropper.min.js"></script>
+
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/11.4.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/11.4.0/firebase-messaging-compat.js"></script>
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyArV7fQ7auwRjcGo-zsydS4KAtstolnHr0",
+      authDomain: "smashrank-90503.firebaseapp.com",
+      projectId: "smashrank-90503",
+      storageBucket: "smashrank-90503.firebasestorage.app",
+      messagingSenderId: "179250232148",
+      appId: "1:179250232148:web:8a8aed6d50b3757c3b26c1",
+      measurementId: "G-G0HNGXZJ1V"
+    };
+    firebase.initializeApp(firebaseConfig);
+  </script>
 </head>
 <body>
   <script src="flutter_bootstrap.js" async></script>
