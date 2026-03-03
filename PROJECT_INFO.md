@@ -1,6 +1,6 @@
-# Sistema de Ranking ATS 2026
+# SmashRank
 
-Sistema completo de gerenciamento de ranking de tenis, com cadastro de jogadores, sistema de desafios com 11 regras automatizadas, reserva de quadras com slots fixos por hora, e painel administrativo.
+Sistema completo de gerenciamento de ranking de esportes de raquete, com cadastro de jogadores, sistema de desafios com 11 regras automatizadas, reserva de quadras com slots fixos por hora, e painel administrativo.
 
 ---
 
@@ -24,7 +24,7 @@ Sistema completo de gerenciamento de ranking de tenis, com cadastro de jogadores
 - **API-first**: Toda a logica de negocio critica esta em funcoes PostgreSQL `SECURITY DEFINER` para garantir atomicidade e consistencia.
 - **RLS (Row Level Security)**: Todas as tabelas possuem policies de seguranca.
 - **Realtime**: Supabase Realtime para atualizacoes ao vivo do ranking e desafios.
-- **Deep Linking**: Configurado para `atsranking://` (custom scheme) + universal links.
+- **Deep Linking**: Configurado para `smashrank://` (custom scheme) + universal links.
 
 ---
 

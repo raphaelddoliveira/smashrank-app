@@ -53,6 +53,25 @@ class RankingRepository {
     }
   }
 
+  /// Admin: reorder all ranking positions for a club + sport atomically
+  Future<void> adminReorderRanking({
+    required String clubId,
+    required String sportId,
+    required List<Map<String, dynamic>> rankingOrder,
+  }) async {
+    try {
+      final authId = _client.auth.currentUser!.id;
+      await _client.rpc(SupabaseConstants.rpcAdminReorderRanking, params: {
+        'p_admin_auth_id': authId,
+        'p_club_id': clubId,
+        'p_sport_id': sportId,
+        'p_ranking_order': rankingOrder,
+      });
+    } catch (e) {
+      throw ErrorHandler.handle(e);
+    }
+  }
+
   Future<List<RankingHistoryModel>> getPlayerHistory(
     String playerId, {
     String? clubId,

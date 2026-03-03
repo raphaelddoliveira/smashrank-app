@@ -1,6 +1,6 @@
 {
-    "name": "ats_ranking",
-    "short_name": "ats_ranking",
+    "name": "SmashRank",
+    "short_name": "SmashRank",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",

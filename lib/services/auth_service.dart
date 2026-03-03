@@ -74,7 +74,7 @@ class AuthService {
     try {
       return await _auth.signInWithOAuth(
         OAuthProvider.apple,
-        redirectTo: 'com.ats.atsranking://login-callback/',
+        redirectTo: 'com.smashrank.app://login-callback/',
       );
     } catch (e) {
       throw ErrorHandler.handle(e);

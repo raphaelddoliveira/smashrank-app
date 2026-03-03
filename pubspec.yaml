@@ -1,5 +1,5 @@
-name: ats_ranking
-description: Sistema de Ranking ATS 2026 - Gerenciamento de ranking de tenis
+name: smashrank
+description: SmashRank - Sistema de gerenciamento de ranking de esportes de raquete
 publish_to: 'none'
 version: 1.0.0+1
 

@@ -28,6 +28,6 @@ abstract final class AppConstants {
   static const int tiebreakMinGames = 7;
 
   // Deep link scheme
-  static const String deepLinkScheme = 'atsranking';
-  static const String deepLinkHost = 'ats.ranking.app';
+  static const String deepLinkScheme = 'smashrank';
+  static const String deepLinkHost = 'smashrank.app';
 }

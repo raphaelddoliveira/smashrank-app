@@ -526,6 +526,12 @@ class _MembersSectionState extends ConsumerState<_MembersSection> {
           } else {
             _members.addAll(newMembers);
           }
+          // Sort alphabetically by display name (active first, then alphabetical)
+          _members.sort((a, b) {
+            final statusCmp = a.isActive == b.isActive ? 0 : (a.isActive ? -1 : 1);
+            if (statusCmp != 0) return statusCmp;
+            return a.displayName.toLowerCase().compareTo(b.displayName.toLowerCase());
+          });
           _hasMore = newMembers.length >= _pageSize;
           _isLoading = false;
           _initialLoaded = true;
@@ -670,17 +676,22 @@ class _MemberTile extends ConsumerWidget {
           leading: CircleAvatar(
             backgroundColor: isSuspended
                 ? AppColors.error.withAlpha(40)
-                : member.isClubAdmin
-                    ? AppColors.secondary
-                    : AppColors.primaryLight,
-            child: Text(
-              '#${member.rankingPosition ?? '-'}',
-              style: TextStyle(
-                color: isSuspended ? AppColors.error : Colors.white,
-                fontWeight: FontWeight.w700,
-                fontSize: 13,
-              ),
-            ),
+                : AppColors.primaryLight,
+            backgroundImage: member.playerAvatarUrl != null
+                ? NetworkImage(member.playerAvatarUrl!)
+                : null,
+            child: member.playerAvatarUrl == null
+                ? Text(
+                    member.displayName.isNotEmpty
+                        ? member.displayName[0].toUpperCase()
+                        : '?',
+                    style: TextStyle(
+                      color: isSuspended ? AppColors.error : Colors.white,
+                      fontWeight: FontWeight.w700,
+                      fontSize: 16,
+                    ),
+                  )
+                : null,
           ),
           title: Row(
             children: [

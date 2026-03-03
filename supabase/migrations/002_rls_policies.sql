@@ -1,5 +1,5 @@
 -- ============================================================
--- ATS Ranking System 2026 - Row Level Security Policies
+-- SmashRank - Row Level Security Policies
 -- ============================================================
 
 -- Helper functions

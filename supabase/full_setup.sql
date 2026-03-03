@@ -1,5 +1,5 @@
 -- ============================================================
--- ATS Ranking System 2026 - SETUP COMPLETO
+-- SmashRank - SETUP COMPLETO
 -- Execute este arquivo inteiro no SQL Editor do Supabase
 -- ============================================================
 

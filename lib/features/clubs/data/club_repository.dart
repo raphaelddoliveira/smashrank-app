@@ -123,7 +123,6 @@ class ClubRepository {
 
       final data = await query
           .order('status', ascending: true)
-          .order('ranking_position', ascending: true)
           .range(offset, offset + limit - 1);
       return data.map((e) => ClubMemberModel.fromJson(e)).toList();
     } catch (e) {

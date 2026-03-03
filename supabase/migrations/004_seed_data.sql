@@ -1,5 +1,5 @@
 -- ============================================================
--- ATS Ranking System 2026 - Seed Data
+-- SmashRank - Seed Data
 -- ============================================================
 
 -- NOTE: Replace 'ADMIN_AUTH_UUID_HERE' with the actual UUID

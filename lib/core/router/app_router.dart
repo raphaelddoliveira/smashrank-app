@@ -29,6 +29,7 @@ import '../../features/profile/view/edit_profile_screen.dart';
 import '../../features/profile/view/profile_screen.dart';
 import '../../features/profile/view/public_profile_screen.dart';
 import '../../features/admin/view/admin_dashboard_screen.dart';
+import '../../features/admin/view/admin_ranking_screen.dart';
 import '../../shared/widgets/app_scaffold.dart';
 import '../../services/supabase_service.dart';
 import '../constants/route_names.dart';
@@ -247,6 +248,10 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           GoRoute(
             path: 'sports',
             builder: (context, state) => const AdminSportsScreen(),
+          ),
+          GoRoute(
+            path: 'ranking',
+            builder: (context, state) => const AdminRankingScreen(),
           ),
         ],
       ),

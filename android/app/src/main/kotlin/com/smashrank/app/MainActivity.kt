@@ -1,4 +1,4 @@
-package com.ats.ats_ranking
+package com.smashrank.app
 
 import io.flutter.embedding.android.FlutterActivity
 

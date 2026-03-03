@@ -38,6 +38,7 @@ abstract final class RouteNames {
   static const String adminPlayers = '/admin/players';
   static const String adminAmbulances = '/admin/ambulances';
   static const String adminSports = '/admin/sports';
+  static const String adminRanking = '/admin/ranking';
 
   // Player public profile
   static const String playerProfile = '/players/:playerId';

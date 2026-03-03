@@ -23,6 +23,12 @@ class AdminDashboardScreen extends StatelessWidget {
         padding: const EdgeInsets.all(16),
         children: [
           _AdminCard(
+            icon: Icons.format_list_numbered,
+            title: 'Ordenar Ranking',
+            subtitle: 'Reordenar posições manualmente',
+            onTap: () => context.push('/admin/ranking'),
+          ),
+          _AdminCard(
             icon: Icons.people,
             title: 'Gerenciar Jogadores',
             subtitle: 'Status, posição, ambulância',
