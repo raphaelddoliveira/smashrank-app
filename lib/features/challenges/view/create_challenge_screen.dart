@@ -10,11 +10,38 @@ import '../../clubs/viewmodel/club_providers.dart';
 import '../viewmodel/challenge_list_viewmodel.dart';
 import '../viewmodel/create_challenge_viewmodel.dart';
 
-class CreateChallengeScreen extends ConsumerWidget {
-  const CreateChallengeScreen({super.key});
+class CreateChallengeScreen extends ConsumerStatefulWidget {
+  final String? preSelectedOpponentId;
+
+  const CreateChallengeScreen({super.key, this.preSelectedOpponentId});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<CreateChallengeScreen> createState() =>
+      _CreateChallengeScreenState();
+}
+
+class _CreateChallengeScreenState extends ConsumerState<CreateChallengeScreen> {
+  bool _autoTriggered = false;
+
+  void _tryAutoSelect(List<ClubMemberModel> opponents) {
+    if (_autoTriggered || widget.preSelectedOpponentId == null) return;
+    _autoTriggered = true;
+
+    final opponent = opponents
+        .where((o) => o.playerId == widget.preSelectedOpponentId)
+        .firstOrNull;
+    if (opponent == null) return;
+
+    // Show confirmation dialog on next frame
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        _confirmChallenge(opponent);
+      }
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final opponentsAsync = ref.watch(eligibleOpponentsProvider);
     final createState = ref.watch(createChallengeProvider);
     final clubSport = ref.watch(currentClubSportProvider);
@@ -35,6 +62,8 @@ class CreateChallengeScreen extends ConsumerWidget {
       ),
       body: opponentsAsync.when(
         data: (opponents) {
+          _tryAutoSelect(opponents);
+
           if (opponents.isEmpty) {
             return Center(
               child: Padding(
@@ -149,8 +178,7 @@ class CreateChallengeScreen extends ConsumerWidget {
                         enabled: !(hasCooldownRule && opponent.isProtected) && !createState.isLoading,
                         onTap: (hasCooldownRule && opponent.isProtected) || createState.isLoading
                             ? null
-                            : () => _confirmChallenge(
-                                context, ref, opponent),
+                            : () => _confirmChallenge(opponent),
                       ),
                     );
                   },
@@ -177,11 +205,7 @@ class CreateChallengeScreen extends ConsumerWidget {
     );
   }
 
-  void _confirmChallenge(
-    BuildContext context,
-    WidgetRef ref,
-    ClubMemberModel opponent,
-  ) {
+  void _confirmChallenge(ClubMemberModel opponent) {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -201,7 +225,7 @@ class CreateChallengeScreen extends ConsumerWidget {
                   .read(createChallengeProvider.notifier)
                   .createChallenge(opponent.playerId);
 
-              if (challengeId != null && context.mounted) {
+              if (challengeId != null && mounted) {
                 SnackbarUtils.showSuccess(context, 'Desafio criado!');
                 ref.invalidate(activeChallengesProvider);
                 context.pushReplacement('/challenges/$challengeId');

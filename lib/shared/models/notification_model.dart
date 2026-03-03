@@ -9,6 +9,7 @@ class NotificationModel {
   final Map<String, dynamic> data;
   final bool isRead;
   final DateTime createdAt;
+  final String? _columnClubId;
 
   const NotificationModel({
     required this.id,
@@ -19,7 +20,8 @@ class NotificationModel {
     this.data = const {},
     this.isRead = false,
     required this.createdAt,
-  });
+    String? columnClubId,
+  }) : _columnClubId = columnClubId;
 
   IconLabel get iconLabel => switch (type) {
         NotificationType.challengeReceived => (icon: 'sports_tennis', color: 0xFFFF9800),
@@ -42,8 +44,8 @@ class NotificationModel {
   /// Get the challenge_id from data if present (for navigation)
   String? get challengeId => data['challenge_id'] as String?;
 
-  /// Get the club_id from data if present (for navigation)
-  String? get clubId => data['club_id'] as String?;
+  /// Get the club_id — checks DB column first, then data JSON fallback
+  String? get clubId => _columnClubId ?? data['club_id'] as String?;
 
   factory NotificationModel.fromJson(Map<String, dynamic> json) {
     return NotificationModel(
@@ -55,6 +57,7 @@ class NotificationModel {
       data: (json['data'] as Map<String, dynamic>?) ?? {},
       isRead: json['is_read'] as bool? ?? false,
       createdAt: DateTime.parse(json['created_at'] as String),
+      columnClubId: json['club_id'] as String?,
     );
   }
 }

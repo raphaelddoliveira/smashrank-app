@@ -690,6 +690,30 @@ class ChallengeRepository {
     }
   }
 
+  /// Get match history for a specific player (completed, WO)
+  Future<List<ChallengeModel>> getPlayerMatchHistory({
+    required String playerId,
+    required String clubId,
+    String? sportId,
+    int limit = 20,
+  }) async {
+    try {
+      var query = _client
+          .from(SupabaseConstants.challengesTable)
+          .select(_selectWithJoins)
+          .eq('club_id', clubId)
+          .or('challenger_id.eq.$playerId,challenged_id.eq.$playerId')
+          .inFilter('status', ['completed', 'wo_challenger', 'wo_challenged']);
+      if (sportId != null) {
+        query = query.eq('sport_id', sportId);
+      }
+      final data = await query.order('completed_at', ascending: false).limit(limit);
+      return data.map((e) => ChallengeModel.fromJson(e)).toList();
+    } catch (e) {
+      throw ErrorHandler.handle(e);
+    }
+  }
+
   Future<String> _getCurrentPlayerId() async {
     final authId = _client.auth.currentUser!.id;
     final data = await _client

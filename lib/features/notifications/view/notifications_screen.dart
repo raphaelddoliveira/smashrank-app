@@ -175,15 +175,17 @@ class _NotificationTile extends ConsumerWidget {
       case NotificationType.general:
         if (challengeId != null) {
           context.push('/challenges/$challengeId');
+        } else if (n.data['request_id'] != null && n.clubId != null) {
+          // Join request → go to club management (pending members)
+          context.push('/clubs/${n.clubId}/manage');
         } else if (n.data['reservation_id'] != null) {
           context.go('/courts/my-reservations');
         } else if (n.data['sport_id'] != null) {
-          // Ranking-related (opt-in, opt-out, admin adjustment)
           context.go('/ranking');
         } else if (n.data['position'] != null) {
           context.go('/ranking');
-        } else if (notification.clubId != null) {
-          context.push('/clubs/${notification.clubId}/manage');
+        } else if (n.clubId != null) {
+          context.push('/clubs/${n.clubId}/manage');
         }
     }
   }

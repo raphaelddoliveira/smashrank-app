@@ -12,7 +12,6 @@ import '../../../core/utils/validators.dart';
 import '../../../shared/widgets/gradient_button.dart';
 import '../viewmodel/login_viewmodel.dart';
 import 'widgets/auth_form_field.dart';
-import 'widgets/social_login_buttons.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
@@ -156,20 +155,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                             ),
                           )
                         : const Text('Entrar'),
-                  ),
-                  const SizedBox(height: 24),
-                  SocialLoginButtons(
-                    isLoading: isLoading,
-                    onGooglePressed: () {
-                      ref
-                          .read(loginViewModelProvider.notifier)
-                          .loginWithGoogle();
-                    },
-                    onApplePressed: () {
-                      ref
-                          .read(loginViewModelProvider.notifier)
-                          .loginWithApple();
-                    },
                   ),
                   const SizedBox(height: 24),
                   Row(

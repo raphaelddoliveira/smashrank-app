@@ -27,6 +27,7 @@ import '../../features/courts/view/my_reservations_screen.dart';
 import '../../features/notifications/view/notifications_screen.dart';
 import '../../features/profile/view/edit_profile_screen.dart';
 import '../../features/profile/view/profile_screen.dart';
+import '../../features/profile/view/public_profile_screen.dart';
 import '../../features/admin/view/admin_dashboard_screen.dart';
 import '../../shared/widgets/app_scaffold.dart';
 import '../../services/supabase_service.dart';
@@ -94,7 +95,14 @@ final appRouterProvider = Provider<GoRouter>((ref) {
             routes: [
               GoRoute(
                 path: 'create',
-                builder: (context, state) => const CreateChallengeScreen(),
+                builder: (context, state) {
+                  final extra =
+                      state.extra as Map<String, dynamic>? ?? {};
+                  return CreateChallengeScreen(
+                    preSelectedOpponentId:
+                        extra['challengedId'] as String?,
+                  );
+                },
               ),
               GoRoute(
                 path: ':challengeId',
@@ -203,6 +211,14 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         path: '/clubs/:clubId/edit',
         builder: (context, state) => EditClubScreen(
           clubId: state.pathParameters['clubId']!,
+        ),
+      ),
+
+      // Player public profile (no bottom nav)
+      GoRoute(
+        path: '/players/:playerId',
+        builder: (context, state) => PublicProfileScreen(
+          playerId: state.pathParameters['playerId']!,
         ),
       ),
 

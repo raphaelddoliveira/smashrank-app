@@ -39,6 +39,9 @@ abstract final class RouteNames {
   static const String adminAmbulances = '/admin/ambulances';
   static const String adminSports = '/admin/sports';
 
+  // Player public profile
+  static const String playerProfile = '/players/:playerId';
+
   // Court slots admin
   static const String courtSlots = '/courts/:courtId/slots';
 }

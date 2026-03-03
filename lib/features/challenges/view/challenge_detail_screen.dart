@@ -91,6 +91,7 @@ class _ChallengeDetailBody extends ConsumerWidget {
                     name: challenge.challengerName ?? 'Jogador',
                     position: challenge.challengerPosition,
                     isCurrentUser: isChallenger,
+                    playerId: challenge.challengerId,
                   ),
                   Padding(
                     padding: const EdgeInsets.symmetric(vertical: 8),
@@ -115,6 +116,7 @@ class _ChallengeDetailBody extends ConsumerWidget {
                     name: challenge.challengedName ?? 'Jogador',
                     position: challenge.challengedPosition,
                     isCurrentUser: isChallenged,
+                    playerId: challenge.challengedId,
                   ),
                 ],
               ),
@@ -960,51 +962,64 @@ class _PlayerRow extends StatelessWidget {
   final String name;
   final int position;
   final bool isCurrentUser;
+  final String playerId;
 
   const _PlayerRow({
     required this.label,
     required this.name,
     required this.position,
     required this.isCurrentUser,
+    required this.playerId,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      children: [
-        CircleAvatar(
-          radius: 20,
-          backgroundColor: AppColors.surfaceVariant,
-          child: Text('#$position',
-              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
-        ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                label,
-                style: const TextStyle(fontSize: 11, color: AppColors.onBackgroundLight),
-              ),
-              Row(
-                children: [
-                  Text(
-                    name,
-                    style: const TextStyle(fontWeight: FontWeight.w600),
-                  ),
-                  if (isCurrentUser)
-                    const Text(
-                      ' (Você)',
-                      style:
-                          TextStyle(fontSize: 12, color: AppColors.primary),
-                    ),
-                ],
-              ),
-            ],
+    return GestureDetector(
+      onTap: () {
+        if (isCurrentUser) {
+          context.push('/profile');
+        } else {
+          context.push('/players/$playerId');
+        }
+      },
+      child: Row(
+        children: [
+          CircleAvatar(
+            radius: 20,
+            backgroundColor: AppColors.surfaceVariant,
+            child: Text('#$position',
+                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
           ),
-        ),
-      ],
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  label,
+                  style: const TextStyle(fontSize: 11, color: AppColors.onBackgroundLight),
+                ),
+                Row(
+                  children: [
+                    Text(
+                      name,
+                      style: const TextStyle(fontWeight: FontWeight.w600),
+                    ),
+                    if (isCurrentUser)
+                      const Text(
+                        ' (Você)',
+                        style:
+                            TextStyle(fontSize: 12, color: AppColors.primary),
+                      ),
+                    const SizedBox(width: 4),
+                    Icon(Icons.chevron_right, size: 16, color: AppColors.onBackgroundLight),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

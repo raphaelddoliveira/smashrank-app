@@ -202,7 +202,7 @@ class _RankingScreenState extends ConsumerState<RankingScreen> {
                                           topThree: topThree,
                                           onTap: (member) {
                                             context.push(
-                                              '/ranking/history/${member.playerId}?name=${Uri.encodeComponent(member.playerName)}',
+                                              '/players/${member.playerId}',
                                             );
                                           },
                                         ),
@@ -331,7 +331,7 @@ class _RankingScreenState extends ConsumerState<RankingScreen> {
                                   member: member,
                                   onTap: () {
                                     context.push(
-                                      '/ranking/history/${member.playerId}?name=${Uri.encodeComponent(member.playerName)}',
+                                      '/players/${member.playerId}',
                                     );
                                   },
                                 );
