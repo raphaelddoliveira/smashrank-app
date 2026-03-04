@@ -7,7 +7,6 @@ import '../../core/theme/app_colors.dart';
 import '../../features/clubs/viewmodel/club_providers.dart';
 import '../../features/notifications/viewmodel/notification_viewmodel.dart';
 import '../../services/push_notification_service.dart';
-import '../providers/current_player_provider.dart';
 import 'floating_nav_bar.dart';
 
 class AppScaffold extends ConsumerWidget {
@@ -35,13 +34,11 @@ class AppScaffold extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final currentIndex = _currentIndex(context);
     final unreadAsync = ref.watch(unreadCountProvider);
-    final currentPlayer = ref.watch(currentPlayerProvider);
-
     // Activate realtime listener for notifications
     ref.watch(notificationRealtimeProvider);
     // Activate web push notifications
     ref.watch(pushNotificationProvider);
-    final isAdmin = currentPlayer.valueOrNull?.isAdmin ?? false;
+    final isAdmin = ref.watch(isClubAdminProvider);
     final bottomPadding = MediaQuery.of(context).viewPadding.bottom;
 
     // Auto-select first club if none selected
