@@ -92,9 +92,25 @@ class ChallengeRepository {
   }
 
   /// Get only active challenges for current player in a club + sport
+  /// Aplica o WO automático nos desafios cujo prazo de resposta (48h) venceu.
+  /// Falha em silêncio: é manutenção de fundo, não pode quebrar a listagem.
+  Future<void> _expirePendingChallenges() async {
+    try {
+      await _client.rpc(SupabaseConstants.rpcExpirePendingChallenges);
+    } catch (e) {
+      debugPrint('expire_pending_challenges falhou: $e');
+    }
+  }
+
   /// Auto-expires challenges where all proposed dates have passed.
   Future<List<ChallengeModel>> getActiveChallenges({required String clubId, String? sportId}) async {
     try {
+      // Desafio sem resposta em 48h vira WO. Isso dependia de um cron na
+      // Vercel que NUNCA chegou a existir em produção — desafio expirado
+      // ficava 'pending' para sempre, travando o desafiado pela regra de
+      // "1 desafio ativo". Rodar aqui garante que a expiração acontece
+      // sempre que alguém abre a lista de desafios.
+      await _expirePendingChallenges();
       final playerId = await _getCurrentPlayerId();
       var query = _client
           .from(SupabaseConstants.challengesTable)
@@ -798,9 +814,24 @@ class ChallengeRepository {
 
       final challenge = await _client
           .from(SupabaseConstants.challengesTable)
-          .select('challenger_id, challenged_id, club_id, weather_extension_days, play_deadline')
+          .select('challenger_id, challenged_id, club_id, weather_extension_days, '
+              'play_deadline, chosen_date, weather_extended_for')
           .eq('id', challengeId)
           .single();
+
+      // Um adiamento por data agendada. Sem isso, cada toque no botão soma
+      // dias (+3 no 1º, +1 nos demais) e o prazo vira qualquer coisa — foi o
+      // "+13 dias" relatado no grupo em 03/09.
+      final chosenDate = challenge['chosen_date'] as String?;
+      final extendedFor = challenge['weather_extended_for'] as String?;
+      if (chosenDate != null && extendedFor != null &&
+          DateTime.parse(extendedFor)
+              .isAtSameMomentAs(DateTime.parse(chosenDate))) {
+        throw ChallengeException(
+          'Este jogo já foi adiado por chuva. Reagende para uma nova data '
+          'antes de pedir outro adiamento.',
+        );
+      }
 
       final currentExtension = challenge['weather_extension_days'] as int? ?? 0;
       final currentDeadline = DateTime.parse(challenge['play_deadline'] as String);
@@ -812,6 +843,7 @@ class ChallengeRepository {
             'weather_extension_days': currentExtension + daysToAdd,
             'play_deadline':
                 currentDeadline.add(Duration(days: daysToAdd)).toIso8601String(),
+            'weather_extended_for': chosenDate,
           })
           .eq('id', challengeId);
 

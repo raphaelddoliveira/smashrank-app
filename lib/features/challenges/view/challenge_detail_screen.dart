@@ -513,7 +513,12 @@ class _ChallengeDetailBody extends ConsumerWidget {
         final withinPlayWindow = deadline != null &&
             !DateTime(today.year, today.month, today.day).isAfter(
                 DateTime(deadline.year, deadline.month, deadline.day));
-        if (withinPlayWindow && canActOnChallenge) {
+        // canRequestWeatherExtension: um adiamento por data agendada — sem
+        // isso o botão continua disponível e cada toque soma dias (+13 dias
+        // relatado no grupo em 03/09).
+        if (withinPlayWindow &&
+            canActOnChallenge &&
+            challenge.canRequestWeatherExtension) {
           final weatherDays = challenge.nextWeatherExtensionDays;
           actions.add(const SizedBox(height: 8));
           actions.add(

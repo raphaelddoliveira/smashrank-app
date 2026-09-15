@@ -376,10 +376,17 @@ class _CourtScheduleScreenState extends ConsumerState<CourtScheduleScreen> {
 
         final isChallenge = reservation?.isChallenge ?? false;
         final isMine = reservation != null && reservation.reservedBy == currentPlayerId;
+        // O adversário declarado também está jogando: sem isso ele via cadeado
+        // e não conseguia desmarcar o próprio jogo (relatado no grupo em
+        // 15/09 — Fábio reservou, Guilherme era o adversário e ficou preso).
+        final isOpponent = reservation != null &&
+            reservation.opponentType == OpponentType.member &&
+            reservation.opponentId == currentPlayerId;
+        final isParticipant = isMine || isOpponent;
         final hasOpenSlot = reservation != null &&
             reservation.isFriendly &&
             !reservation.hasOpponentDeclared &&
-            !isMine;
+            !isParticipant;
 
         final isAdminReservation = reservation?.isAdministrative ?? false;
         final statusColor = isReserved
@@ -425,7 +432,7 @@ class _CourtScheduleScreenState extends ConsumerState<CourtScheduleScreen> {
             ),
             child: const Text('Reservar', style: TextStyle(fontSize: 13)),
           );
-        } else if (isMine && !isChallenge) {
+        } else if (isParticipant && !isChallenge) {
           // Só reserva amistosa pode ser cancelada aqui. Desafio de ranking
           // não — só admin, pelo detalhe do desafio ou painel admin.
           trailing = IconButton(

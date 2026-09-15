@@ -13,6 +13,8 @@ class ChallengeModel {
   final DateTime? proposedDate3;
   final DateTime? chosenDate;
   final int weatherExtensionDays;
+  /// chosen_date que já consumiu um adiamento por chuva (guarda anti-clique repetido).
+  final DateTime? weatherExtendedFor;
   final DateTime? playDeadline;
   final String? winnerId;
   final String? loserId;
@@ -50,6 +52,7 @@ class ChallengeModel {
     this.proposedDate3,
     this.chosenDate,
     this.weatherExtensionDays = 0,
+    this.weatherExtendedFor,
     this.playDeadline,
     this.winnerId,
     this.loserId,
@@ -131,6 +134,16 @@ class ChallengeModel {
   /// devem usar este valor pra ficarem consistentes.
   int get nextWeatherExtensionDays => weatherExtensionDays == 0 ? 3 : 1;
 
+  /// Só é possível adiar por chuva UMA vez por data agendada. Depois de adiar,
+  /// é preciso reagendar para uma nova data antes de pedir outro adiamento —
+  /// sem isso o jogador consegue somar dias indefinidamente (+13 dias relatado
+  /// no grupo em 03/09).
+  bool get canRequestWeatherExtension {
+    if (chosenDate == null) return false;
+    if (weatherExtendedFor == null) return true;
+    return !weatherExtendedFor!.isAtSameMomentAs(chosenDate!);
+  }
+
   /// True when status is dates_proposed but the chosen date is in the past
   bool get isCourtDateExpired {
     if (status != ChallengeStatus.datesProposed) return false;
@@ -192,6 +205,9 @@ class ChallengeModel {
           ? DateTime.parse(json['chosen_date'] as String)
           : null,
       weatherExtensionDays: json['weather_extension_days'] as int? ?? 0,
+      weatherExtendedFor: json['weather_extended_for'] != null
+          ? DateTime.parse(json['weather_extended_for'] as String)
+          : null,
       playDeadline: json['play_deadline'] != null
           ? DateTime.parse(json['play_deadline'] as String)
           : null,
@@ -243,6 +259,7 @@ class ChallengeModel {
       'proposed_date_3': proposedDate3?.toIso8601String(),
       'chosen_date': chosenDate?.toIso8601String(),
       'weather_extension_days': weatherExtensionDays,
+      'weather_extended_for': weatherExtendedFor?.toIso8601String(),
       'play_deadline': playDeadline?.toIso8601String(),
       'winner_id': winnerId,
       'loser_id': loserId,
