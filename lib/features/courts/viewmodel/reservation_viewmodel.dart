@@ -112,6 +112,19 @@ class ReservationActionNotifier extends StateNotifier<AsyncValue<void>> {
     }
   }
 
+  /// Sai da reserva como adversário, devolvendo a vaga (o dono mantém o horário).
+  Future<bool> leaveReservation(String reservationId) async {
+    state = const AsyncLoading();
+    try {
+      await _repository.leaveReservation(reservationId);
+      state = const AsyncData(null);
+      return true;
+    } on AppException catch (e, st) {
+      state = AsyncError(e, st);
+      return false;
+    }
+  }
+
   Future<bool> applyToReservation(String reservationId) async {
     state = const AsyncLoading();
     try {

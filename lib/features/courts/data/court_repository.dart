@@ -436,6 +436,22 @@ class CourtRepository {
     }
   }
 
+  /// Sai de uma reserva amistosa em que você é o adversário, deixando a VAGA
+  /// ABERTA — o dono mantém o horário e pode chamar outra pessoa.
+  ///
+  /// Vai por RPC porque, ao limpar o próprio nome, a linha resultante não tem
+  /// mais vínculo com quem edita e o WITH CHECK da policy rejeitaria.
+  Future<void> leaveReservation(String reservationId) async {
+    try {
+      await _client.rpc(
+        SupabaseConstants.rpcLeaveReservation,
+        params: {'p_reservation_id': reservationId},
+      );
+    } catch (e) {
+      throw ErrorHandler.handle(e);
+    }
+  }
+
   /// Join an open reservation directly as opponent
   Future<void> applyToReservation(String reservationId) async {
     try {

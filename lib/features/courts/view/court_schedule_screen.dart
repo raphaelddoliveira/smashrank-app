@@ -432,6 +432,14 @@ class _CourtScheduleScreenState extends ConsumerState<CourtScheduleScreen> {
             ),
             child: const Text('Reservar', style: TextStyle(fontSize: 13)),
           );
+        } else if (isOpponent && !isChallenge) {
+          // Adversário sai do jogo e devolve a vaga; quem criou mantém o
+          // horário. Cancelar a reserva inteira continua sendo do dono.
+          trailing = IconButton(
+            onPressed: () => _confirmLeaveReservation(reservation),
+            icon: const Icon(Icons.exit_to_app, color: AppColors.error, size: 20),
+            tooltip: 'Sair da reserva',
+          );
         } else if (isParticipant && !isChallenge) {
           // Só reserva amistosa pode ser cancelada aqui. Desafio de ranking
           // não — só admin, pelo detalhe do desafio ou painel admin.
@@ -524,6 +532,51 @@ class _CourtScheduleScreenState extends ConsumerState<CourtScheduleScreen> {
           ),
         );
       },
+    );
+  }
+
+  /// Adversário sai do jogo e devolve a vaga — a reserva continua de pé no
+  /// nome de quem criou, com a vaga aberta pra outro jogador entrar.
+  void _confirmLeaveReservation(ReservationModel reservation) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Sair da Reserva'),
+        content: Text(
+          'Sair do jogo das ${reservation.timeRange}?\n\n'
+          'O horário continua reservado para ${reservation.playerName ?? 'quem criou'}, '
+          'e a vaga fica aberta para outro jogador entrar.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: const Text('Não'),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: AppColors.error),
+            onPressed: () async {
+              Navigator.of(ctx).pop();
+              final success = await ref
+                  .read(reservationActionProvider.notifier)
+                  .leaveReservation(reservation.id);
+              if (mounted) {
+                if (success) {
+                  SnackbarUtils.showSuccess(
+                      context, 'Você saiu do jogo. A vaga ficou aberta.');
+                  ref.invalidate(courtReservationsProvider(
+                    (courtId: _courtId, date: _selectedDate),
+                  ));
+                  ref.invalidate(myReservationsProvider);
+                  ref.invalidate(hasActiveFriendlyReservationProvider);
+                } else {
+                  SnackbarUtils.showError(context, 'Erro ao sair da reserva');
+                }
+              }
+            },
+            child: const Text('Sair'),
+          ),
+        ],
+      ),
     );
   }
 
@@ -1107,7 +1160,7 @@ class _ReservationBottomSheetState
                 spacing: 8,
                 children: [
                   ChoiceChip(
-                    label: const Text('Declarar depois'),
+                    label: const Text('Deixar vaga aberta'),
                     selected: _selectedType == null,
                     onSelected: (_) => setState(() {
                       _selectedType = null;

@@ -39,6 +39,7 @@ abstract final class SupabaseConstants {
   static const String rpcAdminCreateChallenge = 'admin_create_challenge';
   static const String rpcCancelChallengeReservations = 'cancel_challenge_reservations';
   static const String rpcCompleteChallengeReservation = 'complete_challenge_reservation';
+  static const String rpcLeaveReservation = 'leave_reservation';
 
   // Storage buckets
   static const String avatarsBucket = 'avatars';
