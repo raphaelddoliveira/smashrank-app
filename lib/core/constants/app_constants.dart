@@ -1,7 +1,9 @@
 abstract final class AppConstants {
   // Challenge rules
   static const int maxChallengePositionsAhead = 2;
-  static const Duration challengeResponseDeadline = Duration(hours: 48);
+  /// Prazo para o desafiado responder. 24h a partir da hora do desafio —
+  /// regra definida pelo clube em 21/09/2026 (antes eram 48h).
+  static const Duration challengeResponseDeadline = Duration(hours: 24);
   static const Duration challengerCooldown = Duration(hours: 48);
   static const Duration challengedProtection = Duration(hours: 24);
   static const Duration gameDeadline = Duration(days: 7);

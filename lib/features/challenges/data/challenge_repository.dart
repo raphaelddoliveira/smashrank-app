@@ -92,7 +92,7 @@ class ChallengeRepository {
   }
 
   /// Get only active challenges for current player in a club + sport
-  /// Aplica o WO automático nos desafios cujo prazo de resposta (48h) venceu.
+  /// Aplica o WO automático nos desafios cujo prazo de resposta (24h) venceu.
   /// Falha em silêncio: é manutenção de fundo, não pode quebrar a listagem.
   Future<void> _expirePendingChallenges() async {
     try {
@@ -105,7 +105,7 @@ class ChallengeRepository {
   /// Auto-expires challenges where all proposed dates have passed.
   Future<List<ChallengeModel>> getActiveChallenges({required String clubId, String? sportId}) async {
     try {
-      // Desafio sem resposta em 48h vira WO. Isso dependia de um cron na
+      // Desafio sem resposta no prazo (24h) vira WO. Isso dependia de um cron na
       // Vercel que NUNCA chegou a existir em produção — desafio expirado
       // ficava 'pending' para sempre, travando o desafiado pela regra de
       // "1 desafio ativo". Rodar aqui garante que a expiração acontece
