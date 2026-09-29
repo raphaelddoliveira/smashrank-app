@@ -808,60 +808,43 @@ class ChallengeRepository {
   ///
   /// Regra: 1º uso no desafio = +3 dias; a partir do 2º uso = +1 dia
   /// (mesma lógica de [ChallengeModel.nextWeatherExtensionDays]).
+  /// Solicita adiamento por chuva. NÃO estica o prazo: cria um pedido que um
+  /// administrador do clube precisa liberar (pedido do clube em 29/09 — tinha
+  /// jogador usando a opção sem ter chovido, só pra prorrogar o jogo).
   Future<void> requestWeatherExtension(String challengeId) async {
     try {
-      final playerId = await _getCurrentPlayerId();
+      await _client.rpc(
+        SupabaseConstants.rpcRequestWeatherExtension,
+        params: {'p_challenge_id': challengeId},
+      );
+    } catch (e) {
+      throw ErrorHandler.handle(e);
+    }
+  }
 
-      final challenge = await _client
-          .from(SupabaseConstants.challengesTable)
-          .select('challenger_id, challenged_id, club_id, weather_extension_days, '
-              'play_deadline, chosen_date, weather_extended_for')
-          .eq('id', challengeId)
-          .single();
+  /// Admin do clube libera (ou recusa) um pedido de adiamento por chuva.
+  /// É aqui que o prazo é de fato esticado.
+  Future<void> reviewWeatherExtension(String requestId, {required bool approve}) async {
+    try {
+      await _client.rpc(
+        SupabaseConstants.rpcReviewWeatherExtension,
+        params: {'p_request_id': requestId, 'p_approve': approve},
+      );
+    } catch (e) {
+      throw ErrorHandler.handle(e);
+    }
+  }
 
-      // Um adiamento por data agendada. Sem isso, cada toque no botão soma
-      // dias (+3 no 1º, +1 nos demais) e o prazo vira qualquer coisa — foi o
-      // "+13 dias" relatado no grupo em 03/09.
-      final chosenDate = challenge['chosen_date'] as String?;
-      final extendedFor = challenge['weather_extended_for'] as String?;
-      if (chosenDate != null && extendedFor != null &&
-          DateTime.parse(extendedFor)
-              .isAtSameMomentAs(DateTime.parse(chosenDate))) {
-        throw ChallengeException(
-          'Este jogo já foi adiado por chuva. Reagende para uma nova data '
-          'antes de pedir outro adiamento.',
-        );
-      }
-
-      final currentExtension = challenge['weather_extension_days'] as int? ?? 0;
-      final currentDeadline = DateTime.parse(challenge['play_deadline'] as String);
-      final daysToAdd = currentExtension == 0 ? 3 : 1;
-
-      await _client
-          .from(SupabaseConstants.challengesTable)
-          .update({
-            'weather_extension_days': currentExtension + daysToAdd,
-            'play_deadline':
-                currentDeadline.add(Duration(days: daysToAdd)).toIso8601String(),
-            'weather_extended_for': chosenDate,
-          })
-          .eq('id', challengeId);
-
-      // Notify the other player
-      final otherPlayerId = challenge['challenger_id'] == playerId
-          ? challenge['challenged_id']
-          : challenge['challenger_id'];
-
-      final dayLabel = daysToAdd > 1 ? 'dias' : 'dia';
-      await _client.from(SupabaseConstants.notificationsTable).insert({
-        'player_id': otherPlayerId,
-        'type': 'general',
-        'title': 'Adiamento por Chuva',
-        'body':
-            'O prazo do desafio foi estendido em +$daysToAdd $dayLabel devido a chuva. Total: +${currentExtension + daysToAdd} dias.',
-        'data': {'challenge_id': challengeId},
-        'club_id': challenge['club_id'],
-      });
+  /// Pedido de chuva aguardando liberação neste desafio, se houver.
+  Future<Map<String, dynamic>?> getPendingWeatherRequest(String challengeId) async {
+    try {
+      final data = await _client
+          .from(SupabaseConstants.weatherExtensionRequestsTable)
+          .select('id, requested_by, created_at')
+          .eq('challenge_id', challengeId)
+          .eq('status', 'pending')
+          .maybeSingle();
+      return data;
     } catch (e) {
       throw ErrorHandler.handle(e);
     }

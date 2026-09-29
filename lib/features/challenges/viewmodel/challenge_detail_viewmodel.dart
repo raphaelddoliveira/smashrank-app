@@ -17,6 +17,13 @@ final challengeMatchProvider =
   return repository.getMatchForChallenge(challengeId);
 });
 
+/// Pedido de adiamento por chuva aguardando liberação do admin, se houver.
+final pendingWeatherRequestProvider =
+    FutureProvider.autoDispose.family<Map<String, dynamic>?, String>((ref, challengeId) async {
+  final repository = ref.watch(challengeRepositoryProvider);
+  return repository.getPendingWeatherRequest(challengeId);
+});
+
 final challengeActionProvider =
     StateNotifierProvider<ChallengeActionNotifier, AsyncValue<void>>((ref) {
   return ChallengeActionNotifier(ref.watch(challengeRepositoryProvider));
@@ -142,6 +149,19 @@ class ChallengeActionNotifier extends StateNotifier<AsyncValue<void>> {
     state = const AsyncLoading();
     try {
       await _repository.requestWeatherExtension(challengeId);
+      state = const AsyncData(null);
+      return true;
+    } on AppException catch (e, st) {
+      state = AsyncError(e, st);
+      return false;
+    }
+  }
+
+  /// Admin libera ou recusa o pedido de adiamento por chuva.
+  Future<bool> reviewWeatherExtension(String requestId, {required bool approve}) async {
+    state = const AsyncLoading();
+    try {
+      await _repository.reviewWeatherExtension(requestId, approve: approve);
       state = const AsyncData(null);
       return true;
     } on AppException catch (e, st) {

@@ -513,10 +513,62 @@ class _ChallengeDetailBody extends ConsumerWidget {
         final withinPlayWindow = deadline != null &&
             !DateTime(today.year, today.month, today.day).isAfter(
                 DateTime(deadline.year, deadline.month, deadline.day));
-        // canRequestWeatherExtension: um adiamento por data agendada — sem
-        // isso o botão continua disponível e cada toque soma dias (+13 dias
-        // relatado no grupo em 03/09).
-        if (withinPlayWindow &&
+        // Adiamento por chuva agora é PEDIDO: quem libera é o admin do clube
+        // (tinha jogador usando a opção sem ter chovido, só pra prorrogar).
+        final pedidoChuva =
+            ref.watch(pendingWeatherRequestProvider(challengeId)).valueOrNull;
+
+        if (pedidoChuva != null) {
+          actions.add(const SizedBox(height: 8));
+          actions.add(
+            Card(
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        const Icon(Icons.water_drop, color: AppColors.info),
+                        const SizedBox(width: 12),
+                        const Expanded(
+                          child: Text(
+                            'Adiamento por chuva aguardando liberação do administrador.',
+                            style: TextStyle(fontSize: 13),
+                          ),
+                        ),
+                      ],
+                    ),
+                    if (isAdmin) ...[
+                      const SizedBox(height: 12),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: OutlinedButton(
+                              onPressed: () => _reviewWeather(
+                                  context, ref, pedidoChuva['id'] as String,
+                                  approve: false),
+                              child: const Text('Recusar'),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: ElevatedButton(
+                              onPressed: () => _reviewWeather(
+                                  context, ref, pedidoChuva['id'] as String,
+                                  approve: true),
+                              child: const Text('Liberar'),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+            ),
+          );
+        } else if (withinPlayWindow &&
             canActOnChallenge &&
             challenge.canRequestWeatherExtension) {
           final weatherDays = challenge.nextWeatherExtensionDays;
@@ -526,7 +578,7 @@ class _ChallengeDetailBody extends ConsumerWidget {
               onPressed: () => _confirmWeatherExtension(context, ref),
               icon: const Icon(Icons.water_drop, color: AppColors.info),
               label: Text(
-                'Adiamento por Chuva (+$weatherDays ${weatherDays > 1 ? 'dias' : 'dia'})',
+                'Pedir Adiamento por Chuva (+$weatherDays ${weatherDays > 1 ? 'dias' : 'dia'})',
                 style: TextStyle(color: AppColors.info),
               ),
             ),
@@ -728,10 +780,11 @@ class _ChallengeDetailBody extends ConsumerWidget {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Adiamento por Chuva'),
+        title: const Text('Pedir Adiamento por Chuva'),
         content: Text(
-          'O prazo para jogar será estendido em +$weatherDays $dayLabel devido à chuva.\n\n'
-          '${challenge.weatherExtensionDays > 0 ? 'Extensão atual: +${challenge.weatherExtensionDays} dias\nNovo total: +${challenge.weatherExtensionDays + weatherDays} dias' : 'Novo prazo: +$weatherDays dias além do original'}',
+          'O pedido vai para um administrador do clube liberar.\n\n'
+          'Se for liberado, o prazo para jogar aumenta em +$weatherDays $dayLabel. '
+          'Até lá o prazo continua o mesmo.',
         ),
         actions: [
           TextButton(
@@ -745,25 +798,36 @@ class _ChallengeDetailBody extends ConsumerWidget {
                   .read(challengeActionProvider.notifier)
                   .requestWeatherExtension(challengeId);
               if (success && context.mounted) {
+                ref.invalidate(pendingWeatherRequestProvider(challengeId));
                 ref.invalidate(challengeDetailProvider(challengeId));
-                ref.invalidate(activeChallengesProvider);
-                ref.invalidate(playersWithActiveChallengeProvider);
                 SnackbarUtils.showSuccess(context,
-                    'Prazo estendido em +$weatherDays $dayLabel por chuva');
-                // Reagenda pelo MESMO fluxo do desafio (selectCourtAndDate):
-                // cancela a reserva antiga e cria a nova, dentro do prazo já
-                // estendido. NÃO usar /courts/:id/schedule aqui — aquele é o
-                // fluxo de reserva amistosa e cai na regra de "reserva
-                // amistosa ativa", forçando cancelar o desafio.
-                context.push('/challenges/$challengeId/select-court');
+                    'Pedido enviado. Um administrador vai liberar ou recusar.');
               }
             },
             icon: const Icon(Icons.water_drop),
-            label: const Text('Confirmar'),
+            label: const Text('Enviar pedido'),
           ),
         ],
       ),
     );
+  }
+
+  /// Admin libera ou recusa o pedido de chuva. Só na liberação o prazo muda.
+  void _reviewWeather(BuildContext context, WidgetRef ref, String requestId,
+      {required bool approve}) async {
+    final success = await ref
+        .read(challengeActionProvider.notifier)
+        .reviewWeatherExtension(requestId, approve: approve);
+    if (!context.mounted) return;
+    if (success) {
+      ref.invalidate(pendingWeatherRequestProvider(challengeId));
+      ref.invalidate(challengeDetailProvider(challengeId));
+      ref.invalidate(activeChallengesProvider);
+      SnackbarUtils.showSuccess(
+          context, approve ? 'Adiamento liberado' : 'Pedido recusado');
+    } else {
+      SnackbarUtils.showError(context, 'Não foi possível responder ao pedido');
+    }
   }
 
   void _confirmCancel(BuildContext context, WidgetRef ref) {
