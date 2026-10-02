@@ -34,6 +34,7 @@ import '../../features/admin/view/admin_dashboard_screen.dart';
 import '../../features/admin/view/admin_ranking_screen.dart';
 import '../../features/admin/view/admin_reservations_screen.dart';
 import '../../features/bug_report/view/bug_report_screen.dart';
+import '../../features/fees/view/fees_screen.dart';
 import '../../shared/widgets/app_scaffold.dart';
 import '../../services/supabase_service.dart';
 import '../constants/route_names.dart';
@@ -249,6 +250,12 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/bug-report',
         builder: (context, state) => const BugReportScreen(),
+      ),
+
+      // Mensalidade do jogador (no bottom nav)
+      GoRoute(
+        path: '/mensalidade',
+        builder: (context, state) => const FeesScreen(),
       ),
 
       // Court slots admin (no bottom nav)

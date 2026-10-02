@@ -13,6 +13,10 @@ class ClubModel {
   final String? email;
   final String? website;
 
+  // Mensalidade (cobrança pelo app). Valor nulo = cobrança desligada.
+  final double? monthlyFeeAmount;
+  final int? monthlyFeeDueDay;
+
   // Cover image
   final String? coverUrl;
 
@@ -45,6 +49,8 @@ class ClubModel {
     this.addressCity,
     this.addressState,
     this.addressZip,
+    this.monthlyFeeAmount,
+    this.monthlyFeeDueDay,
   });
 
   bool get hasAddress =>
@@ -102,6 +108,10 @@ class ClubModel {
       email: json['email'] as String?,
       website: json['website'] as String?,
       coverUrl: json['cover_url'] as String?,
+      monthlyFeeAmount: json['monthly_fee_amount'] == null
+          ? null
+          : (json['monthly_fee_amount'] as num).toDouble(),
+      monthlyFeeDueDay: json['monthly_fee_due_day'] as int?,
       addressStreet: json['address_street'] as String?,
       addressNumber: json['address_number'] as String?,
       addressComplement: json['address_complement'] as String?,

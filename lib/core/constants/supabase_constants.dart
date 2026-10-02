@@ -41,6 +41,7 @@ abstract final class SupabaseConstants {
   static const String rpcCancelChallengeReservations = 'cancel_challenge_reservations';
   static const String rpcCompleteChallengeReservation = 'complete_challenge_reservation';
   static const String rpcLeaveReservation = 'leave_reservation';
+  static const String rpcMensalidadeDoMes = 'mensalidade_do_mes';
   static const String rpcRequestWeatherExtension = 'request_weather_extension';
   static const String rpcReviewWeatherExtension = 'review_weather_extension';
 

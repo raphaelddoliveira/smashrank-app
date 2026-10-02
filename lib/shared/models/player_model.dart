@@ -7,6 +7,8 @@ class PlayerModel {
   final String? nickname;
   final String email;
   final String? phone;
+  /// CPF, só dígitos. Exigido pela Cora para emitir o PIX da mensalidade.
+  final String? document;
   final String? avatarUrl;
   final DateTime? dateOfBirth;
   final PlayerRole role;
@@ -29,6 +31,7 @@ class PlayerModel {
     this.nickname,
     required this.email,
     this.phone,
+    this.document,
     this.avatarUrl,
     this.dateOfBirth,
     this.role = PlayerRole.player,
@@ -58,6 +61,7 @@ class PlayerModel {
     String? nickname,
     String? email,
     String? phone,
+    String? document,
     String? avatarUrl,
     DateTime? dateOfBirth,
     PlayerRole? role,
@@ -80,6 +84,7 @@ class PlayerModel {
       nickname: nickname ?? this.nickname,
       email: email ?? this.email,
       phone: phone ?? this.phone,
+      document: document ?? this.document,
       avatarUrl: avatarUrl ?? this.avatarUrl,
       dateOfBirth: dateOfBirth ?? this.dateOfBirth,
       role: role ?? this.role,
@@ -105,6 +110,7 @@ class PlayerModel {
       nickname: json['nickname'] as String?,
       email: json['email'] as String,
       phone: json['phone'] as String?,
+      document: json['document'] as String?,
       avatarUrl: json['avatar_url'] as String?,
       dateOfBirth: json['date_of_birth'] != null
           ? DateTime.parse(json['date_of_birth'] as String)
@@ -141,6 +147,7 @@ class PlayerModel {
       'nickname': nickname,
       'email': email,
       'phone': phone,
+      'document': document,
       'avatar_url': avatarUrl,
       'date_of_birth': dateOfBirth?.toIso8601String().split('T').first,
       'role': role.name,
@@ -162,6 +169,7 @@ class PlayerModel {
       'full_name': fullName,
       'nickname': nickname,
       'phone': phone,
+      'document': document,
       'avatar_url': avatarUrl,
       'date_of_birth': dateOfBirth?.toIso8601String().split('T').first,
       'bio': bio,

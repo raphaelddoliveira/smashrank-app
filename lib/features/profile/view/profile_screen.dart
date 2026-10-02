@@ -40,6 +40,9 @@ class ProfileScreen extends ConsumerWidget {
                 case 'bug':
                   context.push('/bug-report');
                   break;
+                case 'mensalidade':
+                  context.push('/mensalidade');
+                  break;
                 case 'logout':
                   final confirmed = await showDialog<bool>(
                     context: context,
@@ -73,6 +76,16 @@ class ProfileScreen extends ConsumerWidget {
                     Icon(Icons.edit_outlined, size: 20),
                     SizedBox(width: 12),
                     Text('Editar perfil'),
+                  ],
+                ),
+              ),
+              const PopupMenuItem(
+                value: 'mensalidade',
+                child: Row(
+                  children: [
+                    Icon(Icons.payments_outlined, size: 20),
+                    SizedBox(width: 12),
+                    Text('Mensalidade'),
                   ],
                 ),
               ),

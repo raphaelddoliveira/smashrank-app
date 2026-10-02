@@ -341,6 +341,8 @@ class ClubRepository {
     String? addressCity,
     String? addressState,
     String? addressZip,
+    double? monthlyFeeAmount,
+    int? monthlyFeeDueDay,
   }) async {
     try {
       final updates = <String, dynamic>{};
@@ -358,6 +360,9 @@ class ClubRepository {
       if (addressCity != null) updates['address_city'] = addressCity;
       if (addressState != null) updates['address_state'] = addressState;
       if (addressZip != null) updates['address_zip'] = addressZip;
+      // Mensalidade: valor e dia de vencimento usados pela cobrança no app.
+      if (monthlyFeeAmount != null) updates['monthly_fee_amount'] = monthlyFeeAmount;
+      if (monthlyFeeDueDay != null) updates['monthly_fee_due_day'] = monthlyFeeDueDay;
       if (updates.isNotEmpty) {
         await _client.from('clubs').update(updates).eq('id', clubId);
       }

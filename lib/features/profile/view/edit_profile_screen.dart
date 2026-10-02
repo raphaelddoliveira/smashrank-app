@@ -27,6 +27,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
   final _nameController = TextEditingController();
   final _nicknameController = TextEditingController();
   final _phoneController = TextEditingController();
+  final _documentController = TextEditingController();
   final _bioController = TextEditingController();
 
   DominantHand? _dominantHand;
@@ -44,6 +45,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
       _nameController.text = player.fullName;
       _nicknameController.text = player.nickname ?? '';
       _phoneController.text = player.phone ?? '';
+      _documentController.text = player.document ?? '';
       _bioController.text = player.bio ?? '';
       _dominantHand = player.dominantHand;
       _favoriteSportId = player.favoriteSportId;
@@ -57,6 +59,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
     _nameController.dispose();
     _nicknameController.dispose();
     _phoneController.dispose();
+    _documentController.dispose();
     _bioController.dispose();
     super.dispose();
   }
@@ -136,6 +139,9 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
             phone: _phoneController.text.trim().isEmpty
                 ? null
                 : _phoneController.text.trim(),
+            document: _documentController.text.trim().isEmpty
+                ? null
+                : _documentController.text.trim(),
             bio: _bioController.text.trim().isEmpty
                 ? null
                 : _bioController.text.trim(),
@@ -287,6 +293,25 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
           ),
           keyboardType: TextInputType.phone,
           inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+        ),
+        const SizedBox(height: 12),
+        TextFormField(
+          controller: _documentController,
+          decoration: const InputDecoration(
+            labelText: 'CPF',
+            helperText: 'Necessário para pagar a mensalidade pelo app',
+            prefixIcon: Icon(Icons.badge_outlined),
+          ),
+          keyboardType: TextInputType.number,
+          inputFormatters: [
+            FilteringTextInputFormatter.digitsOnly,
+            LengthLimitingTextInputFormatter(11),
+          ],
+          validator: (v) {
+            final t = (v ?? '').trim();
+            if (t.isEmpty) return null; // opcional: só quem for pagar precisa
+            return t.length == 11 ? null : 'CPF deve ter 11 dígitos';
+          },
         ),
         const SizedBox(height: 12),
         TextFormField(

@@ -1,4 +1,10 @@
 abstract final class AppConstants {
+  /// Endereço do serviço de cobrança (Next.js) que fala com a Cora.
+  /// Vazio = pagamento pelo app desligado; o botão avisa em vez de quebrar.
+  static const String cobrancaServiceUrl =
+      String.fromEnvironment('COBRANCA_URL', defaultValue: '');
+
+
   // Challenge rules
   static const int maxChallengePositionsAhead = 2;
   /// Prazo para o desafiado responder, a partir da hora do desafio.

@@ -53,6 +53,12 @@ class ClubManagementScreen extends ConsumerWidget {
               _ClubInfoCard(club: club, isAdmin: isAdmin),
               const SizedBox(height: 16),
 
+              // Mensalidade (admin only)
+              if (isAdmin) ...[
+                _MensalidadeCard(club: club),
+                const SizedBox(height: 16),
+              ],
+
               // Sports section (admin only)
               if (isAdmin) ...[
                 _SportsSection(clubId: clubId),
@@ -1896,5 +1902,132 @@ class _CourtTile extends StatelessWidget {
             : null,
       ),
     );
+  }
+}
+
+
+/// Configuração da mensalidade do clube: valor e dia de vencimento.
+/// É o que destrava o pagamento pelo app — sem valor, o botão de pagar
+/// simplesmente não aparece pro jogador.
+class _MensalidadeCard extends ConsumerStatefulWidget {
+  final ClubModel club;
+  const _MensalidadeCard({required this.club});
+
+  @override
+  ConsumerState<_MensalidadeCard> createState() => _MensalidadeCardState();
+}
+
+class _MensalidadeCardState extends ConsumerState<_MensalidadeCard> {
+  late final TextEditingController _valor = TextEditingController(
+    text: widget.club.monthlyFeeAmount?.toStringAsFixed(2) ?? '',
+  );
+  late final TextEditingController _dia = TextEditingController(
+    text: widget.club.monthlyFeeDueDay?.toString() ?? '',
+  );
+  bool _salvando = false;
+
+  @override
+  void dispose() {
+    _valor.dispose();
+    _dia.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Mensalidade',
+              style: Theme.of(context)
+                  .textTheme
+                  .titleMedium
+                  ?.copyWith(fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 4),
+            const Text(
+              'Com valor preenchido, o jogador consegue pagar pelo app. '
+              'Em branco, a cobrança fica desligada.',
+              style: TextStyle(fontSize: 12),
+            ),
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                Expanded(
+                  child: TextField(
+                    controller: _valor,
+                    decoration: const InputDecoration(
+                      labelText: 'Valor (R\$)',
+                      prefixIcon: Icon(Icons.attach_money),
+                    ),
+                    keyboardType:
+                        const TextInputType.numberWithOptions(decimal: true),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                SizedBox(
+                  width: 110,
+                  child: TextField(
+                    controller: _dia,
+                    decoration: const InputDecoration(
+                      labelText: 'Vence dia',
+                      helperText: '1 a 28',
+                    ),
+                    keyboardType: TextInputType.number,
+                    inputFormatters: [
+                      FilteringTextInputFormatter.digitsOnly,
+                      LengthLimitingTextInputFormatter(2),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: _salvando ? null : _salvar,
+                child: Text(_salvando ? 'Salvando...' : 'Salvar mensalidade'),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _salvar() async {
+    final valor = double.tryParse(_valor.text.trim().replaceAll(',', '.'));
+    final dia = int.tryParse(_dia.text.trim());
+    if (valor == null || valor <= 0) {
+      SnackbarUtils.showError(context, 'Informe um valor maior que zero');
+      return;
+    }
+    if (dia == null || dia < 1 || dia > 28) {
+      SnackbarUtils.showError(context, 'O dia de vencimento vai de 1 a 28');
+      return;
+    }
+
+    setState(() => _salvando = true);
+    try {
+      await ref.read(clubRepositoryProvider).updateClub(
+            widget.club.id,
+            monthlyFeeAmount: valor,
+            monthlyFeeDueDay: dia,
+          );
+      if (!mounted) return;
+      ref.invalidate(currentClubProvider);
+      SnackbarUtils.showSuccess(context, 'Mensalidade configurada');
+    } catch (e) {
+      if (mounted) {
+        SnackbarUtils.showError(context, 'Não foi possível salvar');
+      }
+    } finally {
+      if (mounted) setState(() => _salvando = false);
+    }
   }
 }
