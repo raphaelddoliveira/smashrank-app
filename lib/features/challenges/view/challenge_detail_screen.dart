@@ -591,7 +591,19 @@ class _ChallengeDetailBody extends ConsumerWidget {
           final isBeforeMatchDay = matchDate == null ||
               DateTime(now.year, now.month, now.day)
                   .isBefore(DateTime(matchDate.year, matchDate.month, matchDate.day));
-          if ((isChallenger || isChallenged || isAdmin) && isBeforeMatchDay) {
+          // Exceção: adiamento por chuva JÁ LIBERADO para esta data. Chove no
+          // dia do jogo, então aqui a data da partida é sempre hoje ou já
+          // passou — com a regra acima sozinha o jogador ficava sem como
+          // remarcar, que foi o relato do grupo em 05 e 07/10 ("pedi
+          // adiamento, não aparece a data pra mudar o jogo").
+          final adiadoPorChuva = challenge.weatherExtendedFor != null &&
+              challenge.chosenDate != null &&
+              challenge.weatherExtendedFor!
+                  .isAtSameMomentAs(challenge.chosenDate!);
+          final dentroDoPrazoDeJogo = challenge.playDeadline == null ||
+              DateTime.now().isBefore(challenge.playDeadline!);
+          if ((isChallenger || isChallenged || isAdmin) &&
+              (isBeforeMatchDay || (adiadoPorChuva && dentroDoPrazoDeJogo))) {
             actions.add(const SizedBox(height: 8));
             actions.add(
               OutlinedButton.icon(
